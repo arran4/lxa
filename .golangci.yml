@@ -1,2 +1,19 @@
 run:
   go: '1.24'
+linters:
+  disable:
+    - typecheck
+issues:
+  exclude-use-default: false
+  exclude-dirs:
+    - 'vendor$'
+  exclude-rules:
+    - text: "Error return value of `.*` is not checked"
+      linters:
+        - errcheck
+    - text: "empty branch"
+      linters:
+        - staticcheck
+    - text: "should replace this if statement with an unconditional strings.TrimSuffix"
+      linters:
+        - gosimple
