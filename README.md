@@ -12,7 +12,7 @@ It provides a compact, readable, terminal-width-aware output emphasizing XDG tag
 ## Features
 
 - **XDG Focus**: Easily see XDG tags and comments alongside files.
-- **Filtering**: Powerful expressions to find files (e.g. `has:tags && !has:comment`, `tag:urgent`).
+- **Filtering**: Powerful expressions to find files (e.g. `has:tags and not has:comment`, `tag:urgent`).
 - **Width-Aware**: Intelligently truncates tags and comments to fit your terminal.
 - **Inspect Mode**: Detailed view of all `user.xdg.*` and other extended attributes.
 - **JSON Output**: Structured, parseable JSON for scripting.
@@ -20,39 +20,81 @@ It provides a compact, readable, terminal-width-aware output emphasizing XDG tag
 
 ## Installation
 
-Download a pre-built binary from the [Releases](https://github.com/lxa-project/lxa/releases) page.
-
-Alternatively, compile from source:
-
+### Build from source
 ```bash
 go install github.com/lxa-project/lxa/cmd/lxa@latest
 ```
 
 ## Usage
 
+### Basic List
 List files with XDG metadata prominently displayed:
 ```bash
-lxa
+$ lxa
+file1.txt
+file2.txt [tags: projectX] [comment: needs review]
 ```
 
-Show only files with XDG metadata:
+### Modes
+Show only files with XDG metadata, tags, or comments specifically using the `-m` (mode) flag:
 ```bash
-lxa --xdg-only
+$ lxa -m tags
+file2.txt [tags: projectX] [comment: needs review]
 ```
 
-Use expressions to filter files:
+### Recursive traversal
 ```bash
-lxa --filter "tag:urgent || tag:projectX"
+lxa -R
 ```
 
+### Filtering Expressions
+Use expressions to find specific files. Supported logic: `and`, `or`, `not`, `()`.
+```bash
+$ lxa --filter "(tag:urgent or tag:projectX) and has:comment"
+file2.txt [tags: projectX] [comment: needs review]
+```
+
+### Inspect Mode
 Inspect detailed xattrs for a specific file:
 ```bash
-lxa inspect myfile.txt
+$ lxa inspect myfile.txt
+Path: myfile.txt
+  Type: -rw-r--r--
+  Size: 2048
+  XDG Metadata:
+    tags: projectX, review
+    comment: urgent task
+
+  Other xattrs:
+    user.custom: info
 ```
 
-JSON output:
+### JSON Output
 ```bash
-lxa --json
+$ lxa --json myfile.txt
+[
+  {
+    "metadata": {
+      "All": {
+        "user.xdg.tags": "cHJvamVjdFgsIHJldmlldw=="
+      },
+      "Comment": "",
+      "HasCmnt": false,
+      "HasTags": true,
+      "HasXDG": true,
+      "Tags": [
+        "projectX",
+        "review"
+      ],
+      "XDG": {
+        "user.xdg.tags": "cHJvamVjdFgsIHJldmlldw=="
+      }
+    },
+    "path": "myfile.txt",
+    "size": 2048,
+    "type": "-rw-r--r--"
+  }
+]
 ```
 
 ## Supported Filters
@@ -66,9 +108,7 @@ Filters allow composing powerful searches:
 - `xdg:key` - Has specific XDG key `user.xdg.key`
 - `xattr:key` - Has arbitrary xattr `key`
 
-Logical operators supported: `&&`, `||`, `!`, and grouping `()`.
-
 Example:
 ```bash
-lxa --filter '(tag:urgent || tag:projectX) && has:comment'
+lxa --filter '(tag:urgent or tag:projectX) and has:comment'
 ```

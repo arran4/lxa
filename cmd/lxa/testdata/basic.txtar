@@ -1,4 +1,11 @@
--- dir/file1.txt --
+-- input/file1.txt --
 hello
--- dir/file2.txt --
+-- input/file2.txt --
 world
+-- options.json --
+{
+	"args": []
+}
+-- expected/output.txt --
+file1.txt
+file2.txt

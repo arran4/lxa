@@ -1,2 +1,14 @@
--- xdg_file.txt --
+-- input/xdg_file.txt --
 content
+-- options.json --
+{
+	"args": ["-m", "tags"],
+	"xattrs": {
+		"input/xdg_file.txt": [
+			"user.xdg.tags", "test,foo\u0000",
+			"user.xdg.comment", "a comment\u0000"
+		]
+	}
+}
+-- expected/output.txt --
+[tags: test,foo]

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"embed"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,6 +17,11 @@ import (
 
 //go:embed testdata/*.txtar
 var testdata embed.FS
+
+type Options struct {
+	Args   []string            `json:"args"`
+	Xattrs map[string][]string `json:"xattrs"`
+}
 
 func extractTxtar(t *testing.T, archive *txtar.Archive) string {
 	t.Helper()
@@ -59,24 +65,44 @@ func TestScenarios(t *testing.T) {
 			archive := txtar.Parse(b)
 			dir := extractTxtar(t, archive)
 
-			if entry.Name() == "xdg.txtar" {
-				setXattr(t, filepath.Join(dir, "xdg_file.txt"), "user.xdg.tags", "test,foo\x00")
-				setXattr(t, filepath.Join(dir, "xdg_file.txt"), "user.xdg.comment", "a comment\x00")
+			var opts Options
+			var expectedOutput string
+			for _, f := range archive.Files {
+				if f.Name == "options.json" {
+					if err := json.Unmarshal(f.Data, &opts); err != nil {
+						t.Fatal(err)
+					}
+				} else if f.Name == "expected/output.txt" {
+					expectedOutput = string(f.Data)
+				}
+			}
+
+			if opts.Xattrs != nil {
+				for relPath, attrs := range opts.Xattrs {
+					fullPath := filepath.Join(dir, relPath)
+					for i := 0; i < len(attrs); i += 2 {
+						if i+1 < len(attrs) {
+							setXattr(t, fullPath, attrs[i], attrs[i+1])
+						}
+					}
+				}
 			}
 
 			out := new(bytes.Buffer)
 			errOut := new(bytes.Buffer)
 
-			// pass --recursive to ensure it enters the generated dirs
-			code := cli.Run([]string{"--recursive", dir}, out, errOut)
-			if code != 0 {
-				t.Errorf("expected 0, got %d. errOut: %s", code, errOut.String())
+			args := append(opts.Args, "-R", filepath.Join(dir, "input"))
+			err = cli.Run(args, out, errOut)
+			if err != nil {
+				t.Errorf("expected no error, got %v. errOut: %s", err, errOut.String())
 			}
 
 			output := out.String()
-			for _, f := range archive.Files {
-				if !strings.Contains(output, filepath.Base(f.Name)) {
-					t.Errorf("expected output to contain %q, got:\n%s", filepath.Base(f.Name), output)
+
+			expectedLines := strings.Split(strings.TrimSpace(expectedOutput), "\n")
+			for _, line := range expectedLines {
+				if line != "" && !strings.Contains(output, line) {
+					t.Errorf("expected output to contain %q, got:\n%s", line, output)
 				}
 			}
 		})
@@ -87,9 +113,9 @@ func TestCLI_Help(t *testing.T) {
 	out := new(bytes.Buffer)
 	errOut := new(bytes.Buffer)
 
-	code := cli.Run([]string{"-h"}, out, errOut)
-	if code != 0 {
-		t.Errorf("expected exit code 0, got %d", code)
+	err := cli.Run([]string{"-h"}, out, errOut)
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
 	}
 	if !strings.Contains(errOut.String(), "Usage:") {
 		t.Errorf("expected Usage in output")

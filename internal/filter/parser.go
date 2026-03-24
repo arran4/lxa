@@ -59,28 +59,25 @@ func (l *lexer) nextToken() token {
 		l.pos++
 		return token{typ: tokenRParen, lit: ")"}
 	}
-	if ch == '!' {
-		l.pos++
-		return token{typ: tokenNot, lit: "!"}
-	}
-	if ch == '&' && l.pos+1 < len(l.input) && l.input[l.pos+1] == '&' {
-		l.pos += 2
-		return token{typ: tokenAnd, lit: "&&"}
-	}
-	if ch == '|' && l.pos+1 < len(l.input) && l.input[l.pos+1] == '|' {
-		l.pos += 2
-		return token{typ: tokenOr, lit: "||"}
-	}
 
-	// Identifier (e.g., has:tags, tag:foo, xdg)
+	// Identifier (e.g., has:tags, tag:foo, xdg, and, or, not)
 	start := l.pos
 	for l.pos < len(l.input) && !isWhitespace(l.input[l.pos]) &&
-		l.input[l.pos] != '(' && l.input[l.pos] != ')' &&
-		l.input[l.pos] != '!' && l.input[l.pos] != '&' && l.input[l.pos] != '|' {
+		l.input[l.pos] != '(' && l.input[l.pos] != ')' {
 		l.pos++
 	}
 	lit := l.input[start:l.pos]
-	return token{typ: tokenIdent, lit: lit}
+
+	switch strings.ToLower(lit) {
+	case "and":
+		return token{typ: tokenAnd, lit: "and"}
+	case "or":
+		return token{typ: tokenOr, lit: "or"}
+	case "not":
+		return token{typ: tokenNot, lit: "not"}
+	default:
+		return token{typ: tokenIdent, lit: lit}
+	}
 }
 
 func isWhitespace(ch byte) bool {
