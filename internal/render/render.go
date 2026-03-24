@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/lxa-project/lxa/internal/scanner"
 )
@@ -13,10 +14,12 @@ import (
 // Renderer handles formatting output.
 type Renderer struct {
 	out             io.Writer
+	tw              *tabwriter.Writer
 	opts            Options
 	termWidth       int
 	isTerminal      bool
 	jsonOutputFound bool
+	headerPrinted   bool
 }
 
 // Options configure the renderer.
@@ -41,7 +44,9 @@ func New(out io.Writer, opts Options) *Renderer {
 	}
 
 	if r.opts.JSONOutput {
-		fmt.Fprint(r.out, "[")
+		_, _ = fmt.Fprint(r.out, "[")
+	} else if !r.opts.Inspect {
+		r.tw = tabwriter.NewWriter(r.out, 0, 0, 2, ' ', 0)
 	}
 
 	return r
@@ -51,9 +56,9 @@ func New(out io.Writer, opts Options) *Renderer {
 func (r *Renderer) File(f scanner.FileInfo) {
 	if r.opts.JSONOutput {
 		if r.jsonOutputFound {
-			fmt.Fprint(r.out, ",\n")
+			_, _ = fmt.Fprint(r.out, ",\n")
 		} else {
-			fmt.Fprint(r.out, "\n")
+			_, _ = fmt.Fprint(r.out, "\n")
 		}
 		r.jsonOutputFound = true
 
@@ -70,7 +75,7 @@ func (r *Renderer) File(f scanner.FileInfo) {
 		}
 
 		b, _ := json.MarshalIndent(v, "  ", "  ")
-		fmt.Fprint(r.out, string(b))
+		_, _ = fmt.Fprint(r.out, string(b))
 		return
 	}
 
@@ -79,61 +84,60 @@ func (r *Renderer) File(f scanner.FileInfo) {
 		return
 	}
 
+	if !r.headerPrinted {
+		_, _ = fmt.Fprintln(r.tw, "NAME\tTAGS\tCOMMENT")
+		r.headerPrinted = true
+	}
+
 	r.renderList(f)
 }
 
 func (r *Renderer) renderList(f scanner.FileInfo) {
 	if f.Error != nil {
-		fmt.Fprintf(r.out, "%s (error: %s)\n", f.Path, f.Error)
+		_, _ = fmt.Fprintf(r.tw, "%s\t(error: %s)\t\n", f.Path, f.Error)
 		return
 	}
 
 	name := f.Path
 
-	var parts []string
+	tagsStr := ""
 	if f.Metadata.HasTags {
-		tagsStr := strings.Join(f.Metadata.Tags, ",")
+		tagsStr = strings.Join(f.Metadata.Tags, ",")
 		tagsStr = r.truncate(tagsStr, r.opts.MaxTagsWidth)
-		parts = append(parts, fmt.Sprintf("[tags: %s]", tagsStr))
 	}
+
+	cmntStr := ""
 	if f.Metadata.HasCmnt {
-		cmntStr := f.Metadata.Comment
+		cmntStr = f.Metadata.Comment
 		cmntStr = r.truncate(cmntStr, r.opts.MaxCommentWidth)
-		parts = append(parts, fmt.Sprintf("[comment: %s]", cmntStr))
 	}
 
-	var metaStr string
-	if len(parts) > 0 {
-		metaStr = " " + strings.Join(parts, " ")
-	}
-
-	line := name + metaStr
-	fmt.Fprintln(r.out, line)
+	_, _ = fmt.Fprintf(r.tw, "%s\t%s\t%s\n", name, tagsStr, cmntStr)
 }
 
 func (r *Renderer) renderInspect(f scanner.FileInfo) {
-	fmt.Fprintf(r.out, "Path: %s\n", f.Path)
+	_, _ = fmt.Fprintf(r.out, "Path: %s\n", f.Path)
 	if f.Error != nil {
-		fmt.Fprintf(r.out, "  Error: %s\n\n", f.Error)
+		_, _ = fmt.Fprintf(r.out, "  Error: %s\n\n", f.Error)
 		return
 	}
 
-	fmt.Fprintf(r.out, "  Type: %s\n", f.Info.Mode())
-	fmt.Fprintf(r.out, "  Size: %d\n", f.Info.Size())
+	_, _ = fmt.Fprintf(r.out, "  Type: %s\n", f.Info.Mode())
+	_, _ = fmt.Fprintf(r.out, "  Size: %d\n", f.Info.Size())
 
 	if !f.Metadata.HasXDG {
-		fmt.Fprintln(r.out, "  XDG Metadata: (none)")
+		_, _ = fmt.Fprintln(r.out, "  XDG Metadata: (none)")
 	} else {
-		fmt.Fprintln(r.out, "  XDG Metadata:")
+		_, _ = fmt.Fprintln(r.out, "  XDG Metadata:")
 		if f.Metadata.HasTags {
-			fmt.Fprintf(r.out, "    tags: %s\n", strings.Join(f.Metadata.Tags, ", "))
+			_, _ = fmt.Fprintf(r.out, "    tags: %s\n", strings.Join(f.Metadata.Tags, ", "))
 		}
 		if f.Metadata.HasCmnt {
-			fmt.Fprintf(r.out, "    comment: %s\n", f.Metadata.Comment)
+			_, _ = fmt.Fprintf(r.out, "    comment: %s\n", f.Metadata.Comment)
 		}
 		for k, v := range f.Metadata.XDG {
 			if k != "user.xdg.tags" && k != "user.xdg.comment" {
-				fmt.Fprintf(r.out, "    %s: %s\n", strings.TrimPrefix(k, "user.xdg."), string(v))
+				_, _ = fmt.Fprintf(r.out, "    %s: %s\n", strings.TrimPrefix(k, "user.xdg."), string(v))
 			}
 		}
 	}
@@ -147,20 +151,22 @@ func (r *Renderer) renderInspect(f scanner.FileInfo) {
 	}
 
 	if hasOther {
-		fmt.Fprintln(r.out, "  Other xattrs:")
+		_, _ = fmt.Fprintln(r.out, "  Other xattrs:")
 		for k, v := range f.Metadata.All {
 			if !strings.HasPrefix(k, "user.xdg.") {
-				fmt.Fprintf(r.out, "    %s: %s\n", k, string(v))
+				_, _ = fmt.Fprintf(r.out, "    %s: %s\n", k, string(v))
 			}
 		}
 	}
-	fmt.Fprintln(r.out)
+	_, _ = fmt.Fprintln(r.out)
 }
 
 // Close finishes the output.
 func (r *Renderer) Close() {
 	if r.opts.JSONOutput {
-		fmt.Fprintln(r.out, "\n]")
+		_, _ = fmt.Fprintln(r.out, "\n]")
+	} else if r.tw != nil {
+		r.tw.Flush()
 	}
 }
 
@@ -172,11 +178,6 @@ func (r *Renderer) truncate(s string, max int) string {
 	}
 	if max <= 0 {
 		return s
-	}
-
-	// Calculate a dynamic max if terminal width is known and not disabled
-	if !r.opts.NoWrap && r.isTerminal && r.termWidth > 0 {
-		// Just use `max` as the ceiling, we could make it smarter to fill terminal
 	}
 
 	// simple utf8 aware truncate

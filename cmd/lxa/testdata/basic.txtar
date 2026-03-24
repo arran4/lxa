@@ -7,5 +7,6 @@ world
 	"args": []
 }
 -- expected/output.txt --
+NAME
 file1.txt
 file2.txt

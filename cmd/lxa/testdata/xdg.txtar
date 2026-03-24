@@ -11,4 +11,5 @@ content
 	}
 }
 -- expected/output.txt --
-[tags: test,foo]
+NAME
+test,foo
