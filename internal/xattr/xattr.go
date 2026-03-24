@@ -129,13 +129,13 @@ func (r *SyscallReader) Get(path, name string) ([]byte, error) {
 
 // Metadata holds parsed xattrs.
 type Metadata struct {
-	All      map[string][]byte
-	XDG      map[string][]byte
-	Tags     []string // parsed from user.xdg.tags
-	Comment  string   // parsed from user.xdg.comment
-	HasXDG   bool
-	HasTags  bool
-	HasCmnt  bool
+	All     map[string][]byte
+	XDG     map[string][]byte
+	Tags    []string // parsed from user.xdg.tags
+	Comment string   // parsed from user.xdg.comment
+	HasXDG  bool
+	HasTags bool
+	HasCmnt bool
 }
 
 // ReadMetadata reads and parses all xattrs.

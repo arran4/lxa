@@ -17,17 +17,17 @@ func Run(args []string, out io.Writer, errOut io.Writer) int {
 	f.SetOutput(errOut)
 
 	var (
-		xdgOnly     = f.Bool("xdg-only", false, "Show only files with XDG metadata")
-		tagsOnly    = f.Bool("tags", false, "Show only files with XDG tags")
-		cmntOnly    = f.Bool("comments", false, "Show only files with an XDG comment")
-		allXDG      = f.Bool("all-xdg", false, "Show all XDG metadata attributes") // reserved for inspect mode currently
-		allXattr    = f.Bool("all-xattr", false, "Show all xattrs")               // reserved for inspect mode
-		jsonOutput  = f.Bool("json", false, "Output in JSON format")
-		recursive   = f.Bool("recursive", false, "Traverse directories recursively")
-		filterExpr  = f.String("filter", "", "Apply filter expression (e.g. 'has:tags && !has:comment')")
-		maxTagsW    = f.Int("max-tags-width", 40, "Maximum display width for tags (0 to disable)")
-		maxCmntW    = f.Int("max-comment-width", 60, "Maximum display width for comments (0 to disable)")
-		sortField   = f.String("sort", "name", "Sort by: name, path, xdg, tags, comment")
+		xdgOnly    = f.Bool("xdg-only", false, "Show only files with XDG metadata")
+		tagsOnly   = f.Bool("tags", false, "Show only files with XDG tags")
+		cmntOnly   = f.Bool("comments", false, "Show only files with an XDG comment")
+		allXDG     = f.Bool("all-xdg", false, "Show all XDG metadata attributes") // reserved for inspect mode currently
+		allXattr   = f.Bool("all-xattr", false, "Show all xattrs")                // reserved for inspect mode
+		jsonOutput = f.Bool("json", false, "Output in JSON format")
+		recursive  = f.Bool("recursive", false, "Traverse directories recursively")
+		filterExpr = f.String("filter", "", "Apply filter expression (e.g. 'has:tags && !has:comment')")
+		maxTagsW   = f.Int("max-tags-width", 40, "Maximum display width for tags (0 to disable)")
+		maxCmntW   = f.Int("max-comment-width", 60, "Maximum display width for comments (0 to disable)")
+		sortField  = f.String("sort", "name", "Sort by: name, path, xdg, tags, comment")
 	)
 
 	f.Usage = func() {
