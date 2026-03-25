@@ -14,7 +14,7 @@ import (
 var Out io.Writer = os.Stdout
 var ErrOut io.Writer = os.Stderr
 
-func runList(mode string, recursive bool, filterExpr string, allXdg bool, allXattr bool, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, inspect bool, paths []string) error {
+func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string, allXdg bool, allXattr bool, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, inspect bool, paths []string) error {
 	finalFilter := filterExpr
 
 	xdgOnly := false
@@ -39,9 +39,15 @@ func runList(mode string, recursive bool, filterExpr string, allXdg bool, allXat
 		Recursive: recursive,
 		Filter:    finalFilter,
 		XDGOnly:   xdgOnly,
+		FS:        runCfg.fs,
 	}
 
-	scan, err := scanner.New(xattr.NewSyscallReader(), scanOpts)
+	reader := runCfg.xattrReader
+	if reader == nil {
+		reader = xattr.NewSyscallReader()
+	}
+
+	scan, err := scanner.New(reader, scanOpts)
 	if err != nil {
 		return fmt.Errorf("error initializing scanner: %w", err)
 	}
@@ -105,11 +111,11 @@ func runList(mode string, recursive bool, filterExpr string, allXdg bool, allXat
 }
 
 // Lxa is a subcommand `lxa` -- Lists files displaying extended attributes and XDG metadata
-func Lxa(mode string, recursive bool, filterExpr string, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, paths ...string) error {
-	return runList(mode, recursive, filterExpr, false, false, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, false, paths)
+func Lxa(runCfg *runOptions, mode string, recursive bool, filterExpr string, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, paths ...string) error {
+	return runList(runCfg, mode, recursive, filterExpr, false, false, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, false, paths)
 }
 
 // Inspect is a subcommand `lxa inspect` -- Inspects file extended attributes in detail
-func Inspect(allXdg bool, allXattr bool, recursive bool, jsonOutput bool, maxTagsW int, maxCmntW int, sortField string, paths ...string) error {
-	return runList("all", recursive, "", allXdg, allXattr, jsonOutput, false, maxTagsW, maxCmntW, sortField, true, paths)
+func Inspect(runCfg *runOptions, allXdg bool, allXattr bool, recursive bool, jsonOutput bool, maxTagsW int, maxCmntW int, sortField string, paths ...string) error {
+	return runList(runCfg, "all", recursive, "", allXdg, allXattr, jsonOutput, false, maxTagsW, maxCmntW, sortField, true, paths)
 }

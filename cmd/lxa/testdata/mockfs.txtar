@@ -1,0 +1,37 @@
+-- input/file1.txt --
+-- input/file2.txt --
+-- options.json --
+{
+	"args": [],
+	"useMockFS": true,
+	"mockFiles": {
+		"input/file1.txt": {
+			"mode": 448,
+			"size": 1126,
+			"modTime": "2024-06-01T12:00:00Z",
+			"uid": 0,
+			"gid": 0
+		},
+		"input/file2.txt": {
+			"mode": 448,
+			"size": 1126,
+			"modTime": "2024-06-01T12:00:00Z",
+			"uid": 0,
+			"gid": 0
+		}
+	},
+	"xattrs": {
+		"input/file1.txt": [
+			"user.xdg.tags", "TESTTAG1\u0000",
+			"user.xdg.comment", "Test comment1\u0000"
+		],
+		"input/file2.txt": [
+			"user.xdg.tags", "TESTTAG1\u0000",
+			"user.xdg.comment", "Test comment1\u0000"
+		]
+	}
+}
+-- expected/output.txt --
+PERMISSIONS NODE  OWNER  GROUP  SIZE  MODIFIED  FILENAME  TAGS           COMMENTS
+-rwx------          1           root          root     1.1K   Jun  1  2024  file1.txt      TESTTAG1  Test comment1
+-rwx------          1           root          root     1.1K   Jun  1  2024  file2.txt      TESTTAG1  Test comment1
