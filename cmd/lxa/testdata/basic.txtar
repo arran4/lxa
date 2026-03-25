@@ -7,6 +7,7 @@ world
 	"args": []
 }
 -- expected/output.txt --
+PERMISSIONS
 NAME
 file1.txt
 file2.txt

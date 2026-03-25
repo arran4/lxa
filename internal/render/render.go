@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/user"
 	"strings"
+	"syscall"
 	"text/tabwriter"
+	"time"
 
 	"github.com/lxa-project/lxa/internal/scanner"
 )
@@ -85,7 +88,7 @@ func (r *Renderer) File(f scanner.FileInfo) {
 	}
 
 	if !r.headerPrinted {
-		_, _ = fmt.Fprintln(r.tw, "NAME\tTAGS\tCOMMENT")
+		_, _ = fmt.Fprintln(r.tw, "PERMISSIONS\tOWNER\tGROUP\tSIZE\tMODIFIED\tNAME\tTAGS\tCOMMENT")
 		r.headerPrinted = true
 	}
 
@@ -94,7 +97,7 @@ func (r *Renderer) File(f scanner.FileInfo) {
 
 func (r *Renderer) renderList(f scanner.FileInfo) {
 	if f.Error != nil {
-		_, _ = fmt.Fprintf(r.tw, "%s\t(error: %s)\t\n", f.Path, f.Error)
+		_, _ = fmt.Fprintf(r.tw, "-\t-\t-\t-\t-\t%s\t(error: %s)\t\n", f.Path, f.Error)
 		return
 	}
 
@@ -112,7 +115,27 @@ func (r *Renderer) renderList(f scanner.FileInfo) {
 		cmntStr = r.truncate(cmntStr, r.opts.MaxCommentWidth)
 	}
 
-	_, _ = fmt.Fprintf(r.tw, "%s\t%s\t%s\n", name, tagsStr, cmntStr)
+	// File info extraction
+	mode := f.Info.Mode().String()
+	size := fmt.Sprintf("%d", f.Info.Size())
+	modTime := f.Info.ModTime().Format(time.Stamp)
+
+	owner := "-"
+	group := "-"
+	if stat, ok := f.Info.Sys().(*syscall.Stat_t); ok {
+		if u, err := user.LookupId(fmt.Sprint(stat.Uid)); err == nil {
+			owner = u.Username
+		} else {
+			owner = fmt.Sprint(stat.Uid)
+		}
+		if g, err := user.LookupGroupId(fmt.Sprint(stat.Gid)); err == nil {
+			group = g.Name
+		} else {
+			group = fmt.Sprint(stat.Gid)
+		}
+	}
+
+	_, _ = fmt.Fprintf(r.tw, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", mode, owner, group, size, modTime, name, tagsStr, cmntStr)
 }
 
 func (r *Renderer) renderInspect(f scanner.FileInfo) {
