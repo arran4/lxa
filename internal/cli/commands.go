@@ -13,6 +13,8 @@ import (
 
 var Out io.Writer = os.Stdout
 var ErrOut io.Writer = os.Stderr
+var FS scanner.FileSystem = nil
+var XattrReader xattr.Reader = nil
 
 func runList(mode string, recursive bool, filterExpr string, allXdg bool, allXattr bool, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, inspect bool, paths []string) error {
 	finalFilter := filterExpr
@@ -39,9 +41,15 @@ func runList(mode string, recursive bool, filterExpr string, allXdg bool, allXat
 		Recursive: recursive,
 		Filter:    finalFilter,
 		XDGOnly:   xdgOnly,
+		FS:        FS,
 	}
 
-	scan, err := scanner.New(xattr.NewSyscallReader(), scanOpts)
+	reader := XattrReader
+	if reader == nil {
+		reader = xattr.NewSyscallReader()
+	}
+
+	scan, err := scanner.New(reader, scanOpts)
 	if err != nil {
 		return fmt.Errorf("error initializing scanner: %w", err)
 	}

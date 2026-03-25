@@ -24,11 +24,33 @@ type Scanner struct {
 	opts   Options
 }
 
+// FileSystem interface allows mocking the file system for tests.
+type FileSystem interface {
+	Lstat(name string) (fs.FileInfo, error)
+	ReadDir(name string) ([]fs.DirEntry, error)
+	WalkDir(root string, fn fs.WalkDirFunc) error
+}
+
+type osFS struct{}
+
+func (osFS) Lstat(name string) (fs.FileInfo, error) {
+	return os.Lstat(name)
+}
+
+func (osFS) ReadDir(name string) ([]fs.DirEntry, error) {
+	return os.ReadDir(name)
+}
+
+func (osFS) WalkDir(root string, fn fs.WalkDirFunc) error {
+	return filepath.WalkDir(root, fn)
+}
+
 // Options configure the scanner.
 type Options struct {
 	Recursive bool
 	Filter    string
 	XDGOnly   bool // shorthand for filter "xdg"
+	FS        FileSystem
 }
 
 // New creates a new Scanner.
@@ -40,6 +62,10 @@ func New(r xattr.Reader, opts Options) (*Scanner, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if opts.FS == nil {
+		opts.FS = osFS{}
 	}
 
 	return &Scanner{
@@ -64,7 +90,7 @@ func (s *Scanner) Scan(paths []string) <-chan FileInfo {
 }
 
 func (s *Scanner) scanPath(root string, out chan<- FileInfo) {
-	info, err := os.Lstat(root)
+	info, err := s.opts.FS.Lstat(root)
 	if err != nil {
 		out <- FileInfo{Path: root, Error: err}
 		return
@@ -78,7 +104,7 @@ func (s *Scanner) scanPath(root string, out chan<- FileInfo) {
 
 	if !s.opts.Recursive {
 		// Read top-level directory contents only
-		entries, err := os.ReadDir(root)
+		entries, err := s.opts.FS.ReadDir(root)
 		if err != nil {
 			out <- FileInfo{Path: root, Error: err}
 			return
@@ -96,7 +122,7 @@ func (s *Scanner) scanPath(root string, out chan<- FileInfo) {
 	}
 
 	// Recursive walk
-	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	s.opts.FS.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			out <- FileInfo{Path: path, Error: err}
 			return nil // continue
