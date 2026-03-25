@@ -88,7 +88,7 @@ func (r *Renderer) File(f scanner.FileInfo) {
 	}
 
 	if !r.headerPrinted {
-		_, _ = fmt.Fprintln(r.tw, "PERMISSIONS\tOWNER\tGROUP\tSIZE\tMODIFIED\tNAME\tTAGS\tCOMMENT")
+		_, _ = fmt.Fprintln(r.tw, "FILENAME\tPERMISSIONS\tOWNER\tGROUP\tSIZE\tMODIFIED\tTAGS\tCOMMENTS")
 		r.headerPrinted = true
 	}
 
@@ -97,7 +97,7 @@ func (r *Renderer) File(f scanner.FileInfo) {
 
 func (r *Renderer) renderList(f scanner.FileInfo) {
 	if f.Error != nil {
-		_, _ = fmt.Fprintf(r.tw, "-\t-\t-\t-\t-\t%s\t(error: %s)\t\n", f.Path, f.Error)
+		_, _ = fmt.Fprintf(r.tw, "%s\t-\t-\t-\t-\t-\t(error: %s)\t\n", f.Path, f.Error)
 		return
 	}
 
@@ -135,7 +135,7 @@ func (r *Renderer) renderList(f scanner.FileInfo) {
 		}
 	}
 
-	_, _ = fmt.Fprintf(r.tw, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", mode, owner, group, size, modTime, name, tagsStr, cmntStr)
+	_, _ = fmt.Fprintf(r.tw, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", name, mode, owner, group, size, modTime, tagsStr, cmntStr)
 }
 
 func (r *Renderer) renderInspect(f scanner.FileInfo) {

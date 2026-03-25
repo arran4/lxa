@@ -11,6 +11,7 @@ content
 	}
 }
 -- expected/output.txt --
+FILENAME
 PERMISSIONS  OWNER  GROUP  SIZE  MODIFIED
 xdg_file.txt
 test,foo  a comment

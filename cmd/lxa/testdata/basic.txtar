@@ -7,6 +7,7 @@ world
 	"args": []
 }
 -- expected/output.txt --
+FILENAME
 PERMISSIONS  OWNER  GROUP  SIZE  MODIFIED
 file1.txt
 file2.txt
