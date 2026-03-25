@@ -31,8 +31,21 @@ go install github.com/lxa-project/lxa/cmd/lxa@latest
 List files with XDG metadata prominently displayed:
 ```bash
 $ lxa
-file1.txt
-file2.txt [tags: projectX] [comment: needs review]
+Generic.TV.Show.S02E01.mkv [tags: Seen] [comment: Watched 90% at 21:18]
+Generic.TV.Show.S02E02.mkv
+Generic.TV.Show.S02E03.mkv [tags: Seen] [comment: Watched 90% at 21:19]
+Generic.TV.Show.S02E04.mkv [tags: Seen] [comment: Watched 90% at 21:19]
+```
+
+### Long Listing
+List files with detailed attributes including XDG metadata:
+```bash
+$ lxa -l
+PERMISSIONS  NODE  OWNER  GROUP  SIZE  MODIFIED      FILENAME                    TAGS  COMMENTS
+-rw-rw-rw-   1     user   user   1.6G  Jun 12  2025  Generic.TV.Show.S02E01.mkv  Seen  Watched 90% at 21:18
+-rw-rw-rw-   1     user   user   1.6G  Jun 12  2025  Generic.TV.Show.S02E02.mkv
+-rw-rw-rw-   1     user   user   1.6G  Jun 12  2025  Generic.TV.Show.S02E03.mkv  Seen  Watched 90% at 21:19
+-rw-rw-rw-   1     user   user   1.6G  Jun 12  2025  Generic.TV.Show.S02E04.mkv  Seen  Watched 90% at 21:19
 ```
 
 ### Modes
@@ -108,7 +121,12 @@ Filters allow composing powerful searches:
 - `xdg:key` - Has specific XDG key `user.xdg.key`
 - `xattr:key` - Has arbitrary xattr `key`
 
-Example:
+Examples:
 ```bash
 lxa --filter '(tag:urgent or tag:projectX) and has:comment'
+```
+
+List files that have not been seen:
+```bash
+lxa --filter 'not tag:Seen'
 ```
