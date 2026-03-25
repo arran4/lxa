@@ -209,10 +209,22 @@ func TestScenarios(t *testing.T) {
 				}
 			}
 
-			cli.FS = nil
-			cli.XattrReader = nil
 
+
+			out := new(bytes.Buffer)
+			errOut := new(bytes.Buffer)
+
+			var targetDir string
 			if opts.UseMockFS {
+				// We still need to give it a root directory to start from
+				targetDir = filepath.Join(dir, "input")
+
+				// Change working dir so that relative paths in expected output are matched
+				origWd, _ := os.Getwd()
+				os.Chdir(targetDir)
+				defer os.Chdir(origWd)
+				targetDir = "."
+
 				mockFS := &MockFS{files: make(map[string]*MockFileInfo)}
 				mockReader := &mockXattrReader{xattrs: make(map[string]map[string][]byte)}
 
@@ -254,8 +266,8 @@ func TestScenarios(t *testing.T) {
 					}
 				}
 
-				cli.FS = mockFS
-				cli.XattrReader = mockReader
+				opts.Args = append(opts.Args, "-R", targetDir)
+				err = cli.Run(opts.Args, out, errOut, cli.WithFS(mockFS), cli.WithXattrReader(mockReader))
 			} else {
 				if opts.Xattrs != nil {
 					for relPath, attrs := range opts.Xattrs {
@@ -267,27 +279,11 @@ func TestScenarios(t *testing.T) {
 						}
 					}
 				}
+				targetDir = filepath.Join(dir, "input")
+				args := append(opts.Args, "-R", targetDir)
+				err = cli.Run(args, out, errOut)
 			}
 
-			out := new(bytes.Buffer)
-			errOut := new(bytes.Buffer)
-
-			var targetDir string
-			if opts.UseMockFS {
-				// We still need to give it a root directory to start from
-				targetDir = filepath.Join(dir, "input")
-
-				// Change working dir so that relative paths in expected output are matched
-				origWd, _ := os.Getwd()
-				os.Chdir(targetDir)
-				defer os.Chdir(origWd)
-				targetDir = "."
-			} else {
-				targetDir = filepath.Join(dir, "input")
-			}
-
-			args := append(opts.Args, "-R", targetDir)
-			err = cli.Run(args, out, errOut)
 			if err != nil {
 				t.Errorf("expected no error, got %v. errOut: %s", err, errOut.String())
 			}

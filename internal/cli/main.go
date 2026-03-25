@@ -5,11 +5,38 @@ import (
 	"io"
 	"strconv"
 	"strings"
+
+	"github.com/lxa-project/lxa/internal/scanner"
+	"github.com/lxa-project/lxa/internal/xattr"
 )
+
+type runOptions struct {
+	fs          scanner.FileSystem
+	xattrReader xattr.Reader
+}
+
+type RunOption func(*runOptions)
+
+func WithFS(fs scanner.FileSystem) RunOption {
+	return func(o *runOptions) {
+		o.fs = fs
+	}
+}
+
+func WithXattrReader(r xattr.Reader) RunOption {
+	return func(o *runOptions) {
+		o.xattrReader = r
+	}
+}
 
 // Run parses flags manually supporting combined short flags (e.g. -Rj)
 // It handles "inspect" as a proper subcommand.
-func Run(args []string, out io.Writer, errOut io.Writer) error {
+func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) error {
+	runCfg := &runOptions{}
+	for _, opt := range opts {
+		opt(runCfg)
+	}
+
 	Out = out
 	ErrOut = errOut
 
@@ -155,10 +182,10 @@ func Run(args []string, out io.Writer, errOut io.Writer) error {
 	}
 
 	if inspectMode {
-		return Inspect(allXdg, allXattr, recursive, jsonOutput, maxTagsW, maxCmntW, sortField, paths...)
+		return Inspect(runCfg, allXdg, allXattr, recursive, jsonOutput, maxTagsW, maxCmntW, sortField, paths...)
 	}
 
-	return Lxa(mode, recursive, filterExpr, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, paths...)
+	return Lxa(runCfg, mode, recursive, filterExpr, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, paths...)
 }
 
 func printHelp() {
