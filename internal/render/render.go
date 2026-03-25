@@ -32,6 +32,7 @@ type Options struct {
 	MaxTagsWidth    int
 	MaxCommentWidth int
 	NoWrap          bool
+	NoHeader        bool
 }
 
 // New creates a new Renderer.
@@ -87,17 +88,41 @@ func (r *Renderer) File(f scanner.FileInfo) {
 		return
 	}
 
-	if !r.headerPrinted {
-		_, _ = fmt.Fprintln(r.tw, "FILENAME\tPERMISSIONS\tOWNER\tGROUP\tSIZE\tMODIFIED\tTAGS\tCOMMENTS")
+	if !r.opts.NoHeader && !r.headerPrinted {
+		_, _ = fmt.Fprintln(r.tw, "PERMISSIONS\tNODE\tOWNER\tGROUP\tSIZE\tMODIFIED\tFILENAME\tTAGS\tCOMMENTS")
 		r.headerPrinted = true
 	}
 
 	r.renderList(f)
 }
 
+// formatSize converts bytes to human readable format
+func formatSize(b int64) string {
+	const unit = 1024
+	if b < unit {
+		return fmt.Sprintf("%d", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f%c", float64(b)/float64(div), "KMGTPE"[exp])
+}
+
+// formatTime converts time to match standard ls -l like "Jan  1  2024" or "Jan  1 15:04"
+func formatTime(t time.Time) string {
+	now := time.Now()
+	year := t.Year()
+	if year == now.Year() {
+		return t.Format("Jan _2 15:04")
+	}
+	return t.Format("Jan _2  2006")
+}
+
 func (r *Renderer) renderList(f scanner.FileInfo) {
 	if f.Error != nil {
-		_, _ = fmt.Fprintf(r.tw, "%s\t-\t-\t-\t-\t-\t(error: %s)\t\n", f.Path, f.Error)
+		_, _ = fmt.Fprintf(r.tw, "-\t-\t-\t-\t-\t-\t%s\t(error: %s)\t\n", f.Path, f.Error)
 		return
 	}
 
@@ -117,17 +142,22 @@ func (r *Renderer) renderList(f scanner.FileInfo) {
 
 	// File info extraction
 	mode := f.Info.Mode().String()
-	size := fmt.Sprintf("%d", f.Info.Size())
-	modTime := f.Info.ModTime().Format(time.Stamp)
+	size := formatSize(f.Info.Size())
+	modTime := formatTime(f.Info.ModTime())
 
 	owner := "-"
 	group := "-"
+	node := "1"
+
 	if stat, ok := f.Info.Sys().(*syscall.Stat_t); ok {
+		node = fmt.Sprint(stat.Nlink)
+
 		if u, err := user.LookupId(fmt.Sprint(stat.Uid)); err == nil {
 			owner = u.Username
 		} else {
 			owner = fmt.Sprint(stat.Uid)
 		}
+
 		if g, err := user.LookupGroupId(fmt.Sprint(stat.Gid)); err == nil {
 			group = g.Name
 		} else {
@@ -135,7 +165,7 @@ func (r *Renderer) renderList(f scanner.FileInfo) {
 		}
 	}
 
-	_, _ = fmt.Fprintf(r.tw, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", name, mode, owner, group, size, modTime, tagsStr, cmntStr)
+	_, _ = fmt.Fprintf(r.tw, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", mode, node, owner, group, size, modTime, name, tagsStr, cmntStr)
 }
 
 func (r *Renderer) renderInspect(f scanner.FileInfo) {

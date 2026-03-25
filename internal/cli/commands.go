@@ -14,7 +14,7 @@ import (
 var Out io.Writer = os.Stdout
 var ErrOut io.Writer = os.Stderr
 
-func runList(mode string, recursive bool, filterExpr string, allXdg bool, allXattr bool, jsonOutput bool, maxTagsW int, maxCmntW int, sortField string, inspect bool, paths []string) error {
+func runList(mode string, recursive bool, filterExpr string, allXdg bool, allXattr bool, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, inspect bool, paths []string) error {
 	finalFilter := filterExpr
 
 	xdgOnly := false
@@ -52,6 +52,7 @@ func runList(mode string, recursive bool, filterExpr string, allXdg bool, allXat
 		MaxTagsWidth:    maxTagsW,
 		MaxCommentWidth: maxCmntW,
 		NoWrap:          false,
+		NoHeader:        noHeader,
 	}
 
 	if len(paths) == 0 {
@@ -104,33 +105,11 @@ func runList(mode string, recursive bool, filterExpr string, allXdg bool, allXat
 }
 
 // Lxa is a subcommand `lxa` -- Lists files displaying extended attributes and XDG metadata
-//
-// Flags:
-//
-//	mode:       --mode -m            (default: "all") Filter mode: 'xdg', 'tags', 'comments', or 'all'
-//	recursive:  --recursive -R       Traverse directories recursively
-//	filterExpr: --filter -f          Apply filter expression
-//	jsonOutput: --json -j            Output in JSON format
-//	maxTagsW:   --max-tags-width -T  (default: 40) Maximum display width for tags
-//	maxCmntW:   --max-comment-width -C (default: 60) Maximum display width for comments
-//	sortField:  --sort -s            (default: "name") Sort by: name, path, xdg, tags, comment
-//	paths:      ...                  Paths to list
-func Lxa(mode string, recursive bool, filterExpr string, jsonOutput bool, maxTagsW int, maxCmntW int, sortField string, paths ...string) error {
-	return runList(mode, recursive, filterExpr, false, false, jsonOutput, maxTagsW, maxCmntW, sortField, false, paths)
+func Lxa(mode string, recursive bool, filterExpr string, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, paths ...string) error {
+	return runList(mode, recursive, filterExpr, false, false, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, false, paths)
 }
 
 // Inspect is a subcommand `lxa inspect` -- Inspects file extended attributes in detail
-//
-// Flags:
-//
-//	allXdg:     --all-xdg -X         Show all XDG metadata attributes
-//	allXattr:   --all-xattr -A       Show all xattrs
-//	recursive:  --recursive -R       Traverse directories recursively
-//	jsonOutput: --json -j            Output in JSON format
-//	maxTagsW:   --max-tags-width -T  (default: 40) Maximum display width for tags
-//	maxCmntW:   --max-comment-width -C (default: 60) Maximum display width for comments
-//	sortField:  --sort -s            (default: "name") Sort by: name, path, xdg, tags, comment
-//	paths:      ...                  Paths to inspect
 func Inspect(allXdg bool, allXattr bool, recursive bool, jsonOutput bool, maxTagsW int, maxCmntW int, sortField string, paths ...string) error {
-	return runList("all", recursive, "", allXdg, allXattr, jsonOutput, maxTagsW, maxCmntW, sortField, true, paths)
+	return runList("all", recursive, "", allXdg, allXattr, jsonOutput, false, maxTagsW, maxCmntW, sortField, true, paths)
 }

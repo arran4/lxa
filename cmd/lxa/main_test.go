@@ -47,6 +47,7 @@ func setXattr(t *testing.T, path, name, value string) {
 	}
 }
 
+
 func TestScenarios(t *testing.T) {
 	entries, err := testdata.ReadDir("testdata")
 	if err != nil {

@@ -25,6 +25,7 @@ func Run(args []string, out io.Writer, errOut io.Writer) error {
 	maxTagsW := 40
 	maxCmntW := 60
 	sortField := "name"
+	noHeader := false
 	paths := []string{}
 
 	allXdg := false
@@ -96,6 +97,8 @@ func Run(args []string, out io.Writer, errOut io.Writer) error {
 				recursive = true
 			case "json":
 				jsonOutput = true
+			case "no-header":
+				noHeader = true
 			case "all-xdg":
 				allXdg = true
 			case "all-xattr":
@@ -114,6 +117,8 @@ func Run(args []string, out io.Writer, errOut io.Writer) error {
 				recursive = true
 			case 'j':
 				jsonOutput = true
+			case 'H':
+				noHeader = true
 			case 'X':
 				allXdg = true
 			case 'A':
@@ -153,7 +158,7 @@ func Run(args []string, out io.Writer, errOut io.Writer) error {
 		return Inspect(allXdg, allXattr, recursive, jsonOutput, maxTagsW, maxCmntW, sortField, paths...)
 	}
 
-	return Lxa(mode, recursive, filterExpr, jsonOutput, maxTagsW, maxCmntW, sortField, paths...)
+	return Lxa(mode, recursive, filterExpr, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, paths...)
 }
 
 func printHelp() {
@@ -165,6 +170,7 @@ func printHelp() {
 	fmt.Fprintln(ErrOut, "  -R, --recursive                Traverse directories recursively")
 	fmt.Fprintln(ErrOut, "  -f, --filter string            Apply filter expression")
 	fmt.Fprintln(ErrOut, "  -j, --json                     Output in JSON format")
+	fmt.Fprintln(ErrOut, "  -H, --no-header                Do not print table headers")
 	fmt.Fprintln(ErrOut, "  -T, --max-tags-width int       Maximum display width for tags (default 40)")
 	fmt.Fprintln(ErrOut, "  -C, --max-comment-width int    Maximum display width for comments (default 60)")
 	fmt.Fprintln(ErrOut, "  -s, --sort string              Sort by: name, path, xdg, tags, comment (default \"name\")")
