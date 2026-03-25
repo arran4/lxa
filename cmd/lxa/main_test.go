@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 	"testing"
@@ -97,12 +98,18 @@ func TestScenarios(t *testing.T) {
 				t.Errorf("expected no error, got %v. errOut: %s", err, errOut.String())
 			}
 
+			// Clean whitespace padding introduced dynamically by text/tabwriter based on filepaths
 			output := out.String()
+			re := regexp.MustCompile(`[ \t]+`)
+			normalizedOutput := re.ReplaceAllString(output, " ")
 
 			expectedLines := strings.Split(strings.TrimSpace(expectedOutput), "\n")
 			for _, line := range expectedLines {
-				if line != "" && !strings.Contains(output, line) {
-					t.Errorf("expected output to contain %q, got:\n%s", line, output)
+				if line != "" {
+					normalizedExpected := re.ReplaceAllString(line, " ")
+					if !strings.Contains(normalizedOutput, normalizedExpected) {
+						t.Errorf("expected output to contain %q, got:\n%s", normalizedExpected, normalizedOutput)
+					}
 				}
 			}
 		})
