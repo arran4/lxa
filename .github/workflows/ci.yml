@@ -143,8 +143,10 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Install git-tag-inc
-        run: go install github.com/arran4/git-tag-inc/cmd/git-tag-inc@latest
+      - name: Setup git-tag-inc
+        uses: arran4/git-tag-inc-action@v1
+        with:
+          mode: install
       - id: tag
         shell: bash
         run: |
@@ -157,15 +159,16 @@ jobs:
             next_tag="v$OVERRIDE"
           else
             case "$MODE" in
-              release-major) level="--major"; suffix="" ;;
-              release-minor) level="--minor"; suffix="" ;;
-              release-patch) level="--patch"; suffix="" ;;
-              release-test)  level="--patch"; suffix="--prerelease test" ;;
-              release-rc)    level="--patch"; suffix="--prerelease rc" ;;
-              release-alpha) level="--patch"; suffix="--prerelease alpha" ;;
+              release-major) level="major"; suffix="" ;;
+              release-minor) level="minor"; suffix="" ;;
+              release-patch) level="patch"; suffix="" ;;
+              release-test)  level="patch"; suffix="test" ;;
+              release-rc)    level="patch"; suffix="rc" ;;
+              release-alpha) level="patch"; suffix="alpha" ;;
               *) echo "Unsupported release mode: $MODE"; exit 1 ;;
             esac
-            next_tag=$(git-tag-inc $level $suffix)
+            next_tag=$(git-tag-inc -print-version-only $level $suffix)
+            git-tag-inc $level $suffix
           fi
 
           echo "release_tag=$next_tag" >> "$GITHUB_OUTPUT"
