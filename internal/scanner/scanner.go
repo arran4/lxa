@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"strings"
+
 	"github.com/lxa-project/lxa/internal/filter"
 	"github.com/lxa-project/lxa/internal/xattr"
 )
@@ -47,10 +49,11 @@ func (osFS) WalkDir(root string, fn fs.WalkDirFunc) error {
 
 // Options configure the scanner.
 type Options struct {
-	Recursive bool
-	Filter    string
-	XDGOnly   bool // shorthand for filter "xdg"
-	FS        FileSystem
+	Recursive  bool
+	Filter     string
+	XDGOnly    bool // shorthand for filter "xdg"
+	FS         FileSystem
+	ShowHidden bool
 }
 
 // New creates a new Scanner.
@@ -147,6 +150,10 @@ func (s *Scanner) emitIfMatches(path string, info fs.FileInfo, out chan<- FileIn
 	if err != nil {
 		// Emit even on xattr error to show the file, but indicate error
 		out <- FileInfo{Path: path, Info: info, Metadata: md, Error: err}
+		return
+	}
+
+	if !s.opts.ShowHidden && strings.HasPrefix(filepath.Base(path), ".") && path != "." && path != ".." {
 		return
 	}
 

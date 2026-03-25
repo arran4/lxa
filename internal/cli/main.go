@@ -53,6 +53,17 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 	maxCmntW := 60
 	sortField := "name"
 	noHeader := false
+
+	longListing := false
+	noGroup := false
+	noUser := false
+	showTitle := false
+	showAuthor := false
+	showCreator := false
+	showOrigin := false
+	showChecksum := false
+	showHidden := false
+
 	paths := []string{}
 
 	allXdg := false
@@ -108,6 +119,8 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 					val = args[i]
 				}
 				maxTagsW, _ = strconv.Atoi(val)
+			case "title":
+				showTitle = true
 			case "max-comment-width":
 				if !hasVal && i+1 < len(args) {
 					i++
@@ -126,6 +139,14 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 				jsonOutput = true
 			case "no-header":
 				noHeader = true
+			case "author":
+				showAuthor = true
+			case "creator":
+				showCreator = true
+			case "origin":
+				showOrigin = true
+			case "checksum":
+				showChecksum = true
 			case "all-xdg":
 				allXdg = true
 			case "all-xattr":
@@ -146,11 +167,23 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 				jsonOutput = true
 			case 'H':
 				noHeader = true
+			case 'l':
+				longListing = true
+			case 'o':
+				longListing = true
+				noGroup = true
+			case 'g':
+				longListing = true
+				noUser = true
+			case 'a':
+				showHidden = true
 			case 'X':
 				allXdg = true
 			case 'A':
 				allXattr = true
-			case 'm', 'f', 'T', 'C', 's':
+			case 'T':
+				showTitle = true
+			case 'm', 'f', 'C', 's', 'W':
 				val := ""
 				if j+1 < len(chars) {
 					// rest of string is the value
@@ -166,7 +199,7 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 					mode = val
 				case 'f':
 					filterExpr = val
-				case 'T':
+				case 'W': // max-tags-width
 					maxTagsW, _ = strconv.Atoi(val)
 				case 'C':
 					maxCmntW, _ = strconv.Atoi(val)
@@ -185,7 +218,7 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 		return Inspect(runCfg, allXdg, allXattr, recursive, jsonOutput, maxTagsW, maxCmntW, sortField, paths...)
 	}
 
-	return Lxa(runCfg, mode, recursive, filterExpr, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, paths...)
+	return Lxa(runCfg, mode, recursive, filterExpr, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, longListing, noGroup, noUser, showTitle, showAuthor, showCreator, showOrigin, showChecksum, showHidden, paths...)
 }
 
 func printHelp() {
@@ -198,7 +231,16 @@ func printHelp() {
 	fmt.Fprintln(ErrOut, "  -f, --filter string            Apply filter expression")
 	fmt.Fprintln(ErrOut, "  -j, --json                     Output in JSON format")
 	fmt.Fprintln(ErrOut, "  -H, --no-header                Do not print table headers")
-	fmt.Fprintln(ErrOut, "  -T, --max-tags-width int       Maximum display width for tags (default 40)")
+	fmt.Fprintln(ErrOut, "  -l                             Long listing format")
+	fmt.Fprintln(ErrOut, "  -o                             Long listing without group information")
+	fmt.Fprintln(ErrOut, "  -g                             Long listing without user information")
+	fmt.Fprintln(ErrOut, "  -a                             Include hidden files")
+	fmt.Fprintln(ErrOut, "  -T, --title                    Show title (header row)")
+	fmt.Fprintln(ErrOut, "      --author                   Show author (user.author)")
+	fmt.Fprintln(ErrOut, "      --creator                  Show creator (user.creator)")
+	fmt.Fprintln(ErrOut, "      --origin                   Show origin (user.origin)")
+	fmt.Fprintln(ErrOut, "      --checksum                 Show checksum (user.checksum)")
+	fmt.Fprintln(ErrOut, "  -W, --max-tags-width int       Maximum display width for tags (default 40)")
 	fmt.Fprintln(ErrOut, "  -C, --max-comment-width int    Maximum display width for comments (default 60)")
 	fmt.Fprintln(ErrOut, "  -s, --sort string              Sort by: name, path, xdg, tags, comment (default \"name\")")
 	fmt.Fprintln(ErrOut, "\nInspect Options:")

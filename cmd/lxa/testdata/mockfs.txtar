@@ -2,7 +2,7 @@
 -- input/file2.txt --
 -- options.json --
 {
-	"args": [],
+	"args": ["-l", "-T"],
 	"useMockFS": true,
 	"mockFiles": {
 		"input/file1.txt": {

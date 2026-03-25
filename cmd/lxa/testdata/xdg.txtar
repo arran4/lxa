@@ -11,5 +11,5 @@ content
 	}
 }
 -- expected/output.txt --
-PERMISSIONS NODE OWNER GROUP SIZE MODIFIED FILENAME TAGS COMMENTS
+
 xdg_file.txt test,foo a comment
