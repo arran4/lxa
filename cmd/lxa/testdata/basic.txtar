@@ -1,0 +1,12 @@
+-- input/file1.txt --
+hello
+-- input/file2.txt --
+world
+-- options.json --
+{
+	"args": []
+}
+-- expected/output.txt --
+PERMISSIONS NODE OWNER GROUP SIZE MODIFIED FILENAME TAGS COMMENTS
+file1.txt
+file2.txt

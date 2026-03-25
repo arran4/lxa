@@ -1,0 +1,6 @@
+lxa
+*.exe
+*.test
+/dist
+/build
+/bin
