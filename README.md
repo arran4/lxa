@@ -17,7 +17,8 @@ It provides a compact, readable, terminal-width-aware output emphasizing XDG tag
 - **Inspect Mode**: Detailed view of all `user.xdg.*` and other extended attributes.
 - **JSON Output**: Structured, parseable JSON for scripting.
 - **No Dependencies**: Pure Go, native Linux syscalls, no shelling out to `getfattr`.
-- **Customizable Output**: Long listing formats (`-l`, `-o`, `-g`), multi-column output (`-C`), toggle headers (`--header`), toggle hidden files (`-a`) and specialized xattr columns (`--author`, `--creator`, `--origin`, `--checksum`).
+- **Customizable Output**: Long listing formats (`-l`, `-o`, `-g`), multi-column output (`-C`), toggle headers (`--header`), toggle hidden files (`-a`) and specialized xattr columns (`--author`, `--creator`, `--origin`, `--checksum`, `--selinux`, `--samba`, `--capabilities`, `--acl`).
+- **First-class Metadata Mutation**: Edit, set, add, remove, and clear metadata such as tags, comments, and ratings directly from the CLI without awkward subcommands (`--set-tags`, `--add-tags`, `--set-comment`, `--set-rating`, etc).
 
 ## Installation
 
@@ -54,6 +55,15 @@ Show only files with XDG metadata, tags, or comments specifically using the `-m`
 ```bash
 $ lxa -m tags
 file2.txt [tags: projectX] [comment: needs review]
+```
+
+### Mutation Operations
+Easily add, set, remove, or clear XDG metadata tags, comments, and ratings:
+```bash
+$ lxa --add-tags=urgent,projectX myfile.txt
+$ lxa --set-comment="Needs review by Friday" myfile.txt
+$ lxa --set-rating=5 myfile.txt
+$ lxa --clear-tags myfile.txt
 ```
 
 ### Recursive traversal

@@ -114,6 +114,24 @@ type mockXattrReader struct {
 	xattrs map[string]map[string][]byte
 }
 
+func (m *mockXattrReader) Set(path, name string, data []byte) error {
+	if m.xattrs == nil {
+		m.xattrs = make(map[string]map[string][]byte)
+	}
+	if m.xattrs[path] == nil {
+		m.xattrs[path] = make(map[string][]byte)
+	}
+	m.xattrs[path][name] = data
+	return nil
+}
+
+func (m *mockXattrReader) Remove(path, name string) error {
+	if m.xattrs != nil && m.xattrs[path] != nil {
+		delete(m.xattrs[path], name)
+	}
+	return nil
+}
+
 func (m *mockXattrReader) List(path string) ([]string, error) {
 	attrs, ok := m.xattrs[path]
 	if !ok {
@@ -267,7 +285,7 @@ func TestScenarios(t *testing.T) {
 				}
 
 				opts.Args = append(opts.Args, "-R", targetDir)
-				err = cli.Run(opts.Args, out, errOut, cli.WithFS(mockFS), cli.WithXattrReader(mockReader))
+				err = cli.Run(opts.Args, out, errOut, cli.WithFS(mockFS), cli.WithXattrStore(mockReader))
 			} else {
 				if opts.Xattrs != nil {
 					for relPath, attrs := range opts.Xattrs {
