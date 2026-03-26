@@ -4,7 +4,7 @@ project_name: lxa
 
 before:
   hooks:
-    - go run github.com/cpuguy83/go-md2man/v2@latest -in README.md -out lxa.1
+    - go run github.com/cpuguy83/go-md2man/v2@latest -in lxa.1.md -out lxa.1
 
 builds:
   - id: lxa
