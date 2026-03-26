@@ -1,0 +1,29 @@
+Usage: lxa [OPTIONS] [PATH...]
+       lxa inspect [PATH...]
+
+lxa is a Linux-first file listing tool focused on extended attributes and XDG metadata.
+
+Options:
+  -m, --mode string              Filter mode: 'xdg', 'tags', 'comments', or 'all' (default "all")
+  -R, --recursive                Traverse directories recursively
+  -f, --filter string            Apply filter expression
+  -j, --json                     Output in JSON format
+  -H, --no-header                Do not print table headers
+  -l                             Long listing format
+  -o                             Long listing without group information
+  -g                             Long listing without user information
+  -a                             Include hidden files
+      --header                   Show header row (title)
+      --author                   Show author (user.author)
+      --creator                  Show creator (user.creator)
+      --origin                   Show origin (user.origin)
+      --checksum                 Show checksum (user.checksum)
+  -T, -W, --max-tags-width int   Maximum display width for tags (default 40)
+  -C, --max-comment-width int    Maximum display width for comments (default 60)
+  -1                             Single column layout
+  -C                             Multi-column layout
+  -s, --sort string              Sort by: name, path, xdg, tags, comment (default "name")
+
+Inspect Options:
+  -X, --all-xdg                  Show all XDG metadata attributes
+  -A, --all-xattr                Show all xattrs

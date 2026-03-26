@@ -1,14 +1,20 @@
 package cli
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/lxa-project/lxa/internal/scanner"
 	"github.com/lxa-project/lxa/internal/xattr"
 )
+
+//go:embed help.tmpl
+var helpText string
+
 
 type runOptions struct {
 	fs          scanner.FileSystem
@@ -226,30 +232,10 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 }
 
 func printHelp() {
-	fmt.Fprintln(ErrOut, "Usage: lxa [OPTIONS] [PATH...]")
-	fmt.Fprintln(ErrOut, "       lxa inspect [PATH...]")
-	fmt.Fprintln(ErrOut, "\nlxa is a Linux-first file listing tool focused on extended attributes and XDG metadata.")
-	fmt.Fprintln(ErrOut, "\nOptions:")
-	fmt.Fprintln(ErrOut, "  -m, --mode string              Filter mode: 'xdg', 'tags', 'comments', or 'all' (default \"all\")")
-	fmt.Fprintln(ErrOut, "  -R, --recursive                Traverse directories recursively")
-	fmt.Fprintln(ErrOut, "  -f, --filter string            Apply filter expression")
-	fmt.Fprintln(ErrOut, "  -j, --json                     Output in JSON format")
-	fmt.Fprintln(ErrOut, "  -H, --no-header                Do not print table headers")
-	fmt.Fprintln(ErrOut, "  -l                             Long listing format")
-	fmt.Fprintln(ErrOut, "  -o                             Long listing without group information")
-	fmt.Fprintln(ErrOut, "  -g                             Long listing without user information")
-	fmt.Fprintln(ErrOut, "  -a                             Include hidden files")
-	fmt.Fprintln(ErrOut, "      --header                   Show header row (title)")
-	fmt.Fprintln(ErrOut, "  -1                             Single column layout")
-	fmt.Fprintln(ErrOut, "  -C                             Multi-column layout")
-	fmt.Fprintln(ErrOut, "      --author                   Show author (user.author)")
-	fmt.Fprintln(ErrOut, "      --creator                  Show creator (user.creator)")
-	fmt.Fprintln(ErrOut, "      --origin                   Show origin (user.origin)")
-	fmt.Fprintln(ErrOut, "      --checksum                 Show checksum (user.checksum)")
-	fmt.Fprintln(ErrOut, "  -T, -W, --max-tags-width int   Maximum display width for tags (default 40)")
-	fmt.Fprintln(ErrOut, "  -C, --max-comment-width int    Maximum display width for comments (default 60)")
-	fmt.Fprintln(ErrOut, "  -s, --sort string              Sort by: name, path, xdg, tags, comment (default \"name\")")
-	fmt.Fprintln(ErrOut, "\nInspect Options:")
-	fmt.Fprintln(ErrOut, "  -X, --all-xdg                  Show all XDG metadata attributes")
-	fmt.Fprintln(ErrOut, "  -A, --all-xattr                Show all xattrs")
+	t, err := template.New("help").Parse(helpText)
+	if err != nil {
+		fmt.Fprintln(ErrOut, helpText)
+		return
+	}
+	_ = t.Execute(ErrOut, nil)
 }
