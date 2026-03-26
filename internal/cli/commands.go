@@ -14,7 +14,7 @@ import (
 var Out io.Writer = os.Stdout
 var ErrOut io.Writer = os.Stderr
 
-func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string, allXdg bool, allXattr bool, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, inspect bool, longListing bool, noGroup bool, noUser bool, showTitle bool, showAuthor bool, showCreator bool, showOrigin bool, showChecksum bool, showHidden bool, paths []string) error {
+func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string, allXdg bool, allXattr bool, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, inspect bool, longListing bool, noGroup bool, noUser bool, showHeader bool, showAuthor bool, showCreator bool, showOrigin bool, showChecksum bool, showHidden bool, singleColumn bool, multiColumn bool, paths []string) error {
 	finalFilter := filterExpr
 
 	xdgOnly := false
@@ -63,11 +63,13 @@ func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string,
 		LongListing:     longListing,
 		NoGroup:         noGroup,
 		NoUser:          noUser,
-		ShowTitle:       showTitle,
+		ShowHeader:      showHeader,
 		ShowAuthor:      showAuthor,
 		ShowCreator:     showCreator,
 		ShowOrigin:      showOrigin,
 		ShowChecksum:    showChecksum,
+		SingleColumn:    singleColumn,
+		MultiColumn:     multiColumn,
 	}
 
 	if len(paths) == 0 {
@@ -120,11 +122,11 @@ func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string,
 }
 
 // Lxa is a subcommand `lxa` -- Lists files displaying extended attributes and XDG metadata
-func Lxa(runCfg *runOptions, mode string, recursive bool, filterExpr string, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, longListing bool, noGroup bool, noUser bool, showTitle bool, showAuthor bool, showCreator bool, showOrigin bool, showChecksum bool, showHidden bool, paths ...string) error {
-	return runList(runCfg, mode, recursive, filterExpr, false, false, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, false, longListing, noGroup, noUser, showTitle, showAuthor, showCreator, showOrigin, showChecksum, showHidden, paths)
+func Lxa(runCfg *runOptions, mode string, recursive bool, filterExpr string, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, longListing bool, noGroup bool, noUser bool, showHeader bool, showAuthor bool, showCreator bool, showOrigin bool, showChecksum bool, showHidden bool, singleColumn bool, multiColumn bool, paths ...string) error {
+	return runList(runCfg, mode, recursive, filterExpr, false, false, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, false, longListing, noGroup, noUser, showHeader, showAuthor, showCreator, showOrigin, showChecksum, showHidden, singleColumn, multiColumn, paths)
 }
 
 // Inspect is a subcommand `lxa inspect` -- Inspects file extended attributes in detail
 func Inspect(runCfg *runOptions, allXdg bool, allXattr bool, recursive bool, jsonOutput bool, maxTagsW int, maxCmntW int, sortField string, paths ...string) error {
-	return runList(runCfg, "all", recursive, "", allXdg, allXattr, jsonOutput, false, maxTagsW, maxCmntW, sortField, true, false, false, false, false, false, false, false, false, false, paths)
+	return runList(runCfg, "all", recursive, "", allXdg, allXattr, jsonOutput, false, maxTagsW, maxCmntW, sortField, true, false, false, false, false, false, false, false, false, false, false, false, paths)
 }

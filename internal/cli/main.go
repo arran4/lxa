@@ -57,12 +57,14 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 	longListing := false
 	noGroup := false
 	noUser := false
-	showTitle := false
+	showHeader := false
 	showAuthor := false
 	showCreator := false
 	showOrigin := false
 	showChecksum := false
 	showHidden := false
+	singleColumn := false
+	multiColumn := false
 
 	paths := []string{}
 
@@ -119,8 +121,8 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 					val = args[i]
 				}
 				maxTagsW, _ = strconv.Atoi(val)
-			case "title":
-				showTitle = true
+			case "header":
+				showHeader = true
 			case "max-comment-width":
 				if !hasVal && i+1 < len(args) {
 					i++
@@ -177,13 +179,15 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 				noUser = true
 			case 'a':
 				showHidden = true
+			case '1':
+				singleColumn = true
+			case 'C':
+				multiColumn = true
 			case 'X':
 				allXdg = true
 			case 'A':
 				allXattr = true
-			case 'T':
-				showTitle = true
-			case 'm', 'f', 'C', 's', 'W':
+			case 'm', 'f', 's', 'W', 'T':
 				val := ""
 				if j+1 < len(chars) {
 					// rest of string is the value
@@ -199,7 +203,7 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 					mode = val
 				case 'f':
 					filterExpr = val
-				case 'W': // max-tags-width
+				case 'W', 'T': // max-tags-width
 					maxTagsW, _ = strconv.Atoi(val)
 				case 'C':
 					maxCmntW, _ = strconv.Atoi(val)
@@ -218,7 +222,7 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 		return Inspect(runCfg, allXdg, allXattr, recursive, jsonOutput, maxTagsW, maxCmntW, sortField, paths...)
 	}
 
-	return Lxa(runCfg, mode, recursive, filterExpr, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, longListing, noGroup, noUser, showTitle, showAuthor, showCreator, showOrigin, showChecksum, showHidden, paths...)
+	return Lxa(runCfg, mode, recursive, filterExpr, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, longListing, noGroup, noUser, showHeader, showAuthor, showCreator, showOrigin, showChecksum, showHidden, singleColumn, multiColumn, paths...)
 }
 
 func printHelp() {
@@ -235,12 +239,14 @@ func printHelp() {
 	fmt.Fprintln(ErrOut, "  -o                             Long listing without group information")
 	fmt.Fprintln(ErrOut, "  -g                             Long listing without user information")
 	fmt.Fprintln(ErrOut, "  -a                             Include hidden files")
-	fmt.Fprintln(ErrOut, "  -T, --title                    Show title (header row)")
+	fmt.Fprintln(ErrOut, "      --header                   Show header row (title)")
+	fmt.Fprintln(ErrOut, "  -1                             Single column layout")
+	fmt.Fprintln(ErrOut, "  -C                             Multi-column layout")
 	fmt.Fprintln(ErrOut, "      --author                   Show author (user.author)")
 	fmt.Fprintln(ErrOut, "      --creator                  Show creator (user.creator)")
 	fmt.Fprintln(ErrOut, "      --origin                   Show origin (user.origin)")
 	fmt.Fprintln(ErrOut, "      --checksum                 Show checksum (user.checksum)")
-	fmt.Fprintln(ErrOut, "  -W, --max-tags-width int       Maximum display width for tags (default 40)")
+	fmt.Fprintln(ErrOut, "  -T, -W, --max-tags-width int   Maximum display width for tags (default 40)")
 	fmt.Fprintln(ErrOut, "  -C, --max-comment-width int    Maximum display width for comments (default 60)")
 	fmt.Fprintln(ErrOut, "  -s, --sort string              Sort by: name, path, xdg, tags, comment (default \"name\")")
 	fmt.Fprintln(ErrOut, "\nInspect Options:")

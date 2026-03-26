@@ -17,7 +17,7 @@ It provides a compact, readable, terminal-width-aware output emphasizing XDG tag
 - **Inspect Mode**: Detailed view of all `user.xdg.*` and other extended attributes.
 - **JSON Output**: Structured, parseable JSON for scripting.
 - **No Dependencies**: Pure Go, native Linux syscalls, no shelling out to `getfattr`.
-- **Customizable Output**: Long listing formats (`-l`, `-o`, `-g`), toggle headers (`-T`), and specialized xattr columns (`--author`, `--checksum`, etc.).
+- **Customizable Output**: Long listing formats (`-l`, `-o`, `-g`), multi-column output (`-C`), toggle headers (`--header`), toggle hidden files (`-a`) and specialized xattr columns (`--author`, `--creator`, `--origin`, `--checksum`).
 
 ## Installation
 
@@ -41,7 +41,7 @@ Generic.TV.Show.S02E04.mkv [tags: Seen] [comment: Watched 90% at 21:19]
 ### Long Listing
 List files with detailed attributes including XDG metadata:
 ```bash
-$ lxa -l -T
+$ lxa -l --header
 PERMISSIONS  NODE  OWNER  GROUP  SIZE  MODIFIED      FILENAME                    TAGS  COMMENTS
 -rw-rw-rw-   1     user   user   1.6G  Jun 12  2025  Generic.TV.Show.S02E01.mkv  Seen  Watched 90% at 21:18
 -rw-rw-rw-   1     user   user   1.6G  Jun 12  2025  Generic.TV.Show.S02E02.mkv

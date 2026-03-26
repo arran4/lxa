@@ -2,6 +2,10 @@
 version: 2
 project_name: lxa
 
+before:
+  hooks:
+    - go run github.com/cpuguy83/go-md2man/v2@latest -in README.md -out lxa.1
+
 builds:
   - id: lxa
     main: ./cmd/lxa
@@ -17,6 +21,9 @@ builds:
 archives:
   - formats:
     - tar.gz
+    files:
+      - README.md
+      - lxa.1
 
 checksum:
   name_template: 'checksums.txt'

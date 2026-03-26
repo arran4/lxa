@@ -23,6 +23,7 @@ type Renderer struct {
 	isTerminal      bool
 	jsonOutputFound bool
 	headerPrinted   bool
+	columnsOutput   []string // buffer for multi-column output
 }
 
 // Options configure the renderer.
@@ -36,11 +37,13 @@ type Options struct {
 	LongListing     bool
 	NoGroup         bool
 	NoUser          bool
-	ShowTitle       bool
+	ShowHeader      bool // changed from ShowTitle
 	ShowAuthor      bool
 	ShowCreator     bool
 	ShowOrigin      bool
 	ShowChecksum    bool
+	SingleColumn    bool // -1 flag
+	MultiColumn     bool // -C flag
 }
 
 // New creates a new Renderer.
@@ -57,9 +60,10 @@ func New(out io.Writer, opts Options) *Renderer {
 
 	if r.opts.JSONOutput {
 		_, _ = fmt.Fprint(r.out, "[")
-	} else if !r.opts.Inspect {
+	} else if !r.opts.Inspect && !r.opts.MultiColumn {
 		r.tw = tabwriter.NewWriter(r.out, 0, 0, 2, ' ', 0)
 	}
+	r.columnsOutput = []string{}
 
 	return r
 }
@@ -96,7 +100,7 @@ func (r *Renderer) File(f scanner.FileInfo) {
 		return
 	}
 
-	if r.opts.ShowTitle && !r.opts.NoHeader && !r.headerPrinted {
+	if r.opts.ShowHeader && !r.opts.NoHeader && !r.headerPrinted && !r.opts.MultiColumn {
 		header := []string{}
 		if r.opts.LongListing {
 			header = append(header, "PERMISSIONS", "NODE")
@@ -247,7 +251,11 @@ func (r *Renderer) renderList(f scanner.FileInfo) {
 
 	cols = append(cols, tagsStr, cmntStr)
 
-	_, _ = fmt.Fprintln(r.tw, strings.Join(cols, "\t"))
+	if r.opts.MultiColumn {
+		r.columnsOutput = append(r.columnsOutput, strings.Join(cols, "\t"))
+	} else {
+		_, _ = fmt.Fprintln(r.tw, strings.Join(cols, "\t"))
+	}
 }
 
 func (r *Renderer) renderInspect(f scanner.FileInfo) {
@@ -300,6 +308,41 @@ func (r *Renderer) renderInspect(f scanner.FileInfo) {
 func (r *Renderer) Close() {
 	if r.opts.JSONOutput {
 		_, _ = fmt.Fprintln(r.out, "\n]")
+	} else if r.opts.MultiColumn {
+		// Calculate columns layout
+		if len(r.columnsOutput) == 0 {
+			return
+		}
+
+		// For a simple column layout, we use a tabwriter but we write entries horizontally
+		// To match `ls -C`, we format items side by side
+		colTw := tabwriter.NewWriter(r.out, 0, 0, 4, ' ', 0)
+
+		// Very basic horizontal wrapping based on terminal width (if available)
+		// Assuming termWidth ~80 if not terminal
+		width := r.termWidth
+		if width <= 0 {
+			width = 80
+		}
+
+		var line []string
+		var currWidth int
+
+		for _, item := range r.columnsOutput {
+			itemLen := len(item) + 4 // roughly adding tab width
+			if currWidth+itemLen > width && len(line) > 0 {
+				_, _ = fmt.Fprintln(colTw, strings.Join(line, "\t"))
+				line = []string{item}
+				currWidth = itemLen
+			} else {
+				line = append(line, item)
+				currWidth += itemLen
+			}
+		}
+		if len(line) > 0 {
+			_, _ = fmt.Fprintln(colTw, strings.Join(line, "\t"))
+		}
+		colTw.Flush()
 	} else if r.tw != nil {
 		r.tw.Flush()
 	}
