@@ -57,6 +57,18 @@ lxa - a Linux-first file listing and inspection tool focused on extended attribu
 **--checksum**
 : Show checksum (reads `user.checksum` xattr).
 
+**--selinux**
+: Show SELinux context (reads `security.selinux`).
+
+**--samba**
+: Show Samba DOS attributes (reads `user.DOSATTRIB`).
+
+**--capabilities**
+: Show file capabilities (reads `security.capability`).
+
+**--acl**
+: Show ACL presence (reads `system.posix_acl_access` and `system.posix_acl_default`).
+
 **-T, -W, --max-tags-width** *int*
 : Maximum display width for tags (default 40).
 
@@ -79,6 +91,32 @@ lxa - a Linux-first file listing and inspection tool focused on extended attribu
 
 **-A, --all-xattr**
 : Show all xattrs.
+
+# MUTATION OPTIONS
+
+**--set-tags=...**
+: Set `user.xdg.tags` (comma-separated).
+
+**--add-tags=...**
+: Add tags without duplicates.
+
+**--remove-tags=...**
+: Remove specified tags.
+
+**--clear-tags**
+: Remove `user.xdg.tags` entirely.
+
+**--set-comment=...**
+: Set `user.xdg.comment`.
+
+**--clear-comment**
+: Remove `user.xdg.comment` entirely.
+
+**--set-rating=...**
+: Set `user.xdg.rating`.
+
+**--clear-rating**
+: Remove `user.xdg.rating` entirely.
 
 ## EXAMPLES
 
