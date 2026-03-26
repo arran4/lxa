@@ -38,12 +38,16 @@ type Options struct {
 	NoGroup         bool
 	NoUser          bool
 	ShowHeader      bool // changed from ShowTitle
-	ShowAuthor      bool
-	ShowCreator     bool
-	ShowOrigin      bool
-	ShowChecksum    bool
-	SingleColumn    bool // -1 flag
-	MultiColumn     bool // -C flag
+	ShowAuthor       bool
+	ShowCreator      bool
+	ShowOrigin       bool
+	ShowChecksum     bool
+	ShowSELinux      bool
+	ShowSamba        bool
+	ShowCapabilities bool
+	ShowACL          bool
+	SingleColumn     bool // -1 flag
+	MultiColumn      bool // -C flag
 }
 
 // New creates a new Renderer.
@@ -126,6 +130,19 @@ func (r *Renderer) File(f scanner.FileInfo) {
 		}
 		if r.opts.ShowChecksum {
 			header = append(header, "CHECKSUM")
+		}
+
+		if r.opts.ShowSELinux {
+			header = append(header, "SELINUX")
+		}
+		if r.opts.ShowSamba {
+			header = append(header, "DOSATTRIB")
+		}
+		if r.opts.ShowCapabilities {
+			header = append(header, "CAPABILITIES")
+		}
+		if r.opts.ShowACL {
+			header = append(header, "ACL")
 		}
 
 		header = append(header, "TAGS", "COMMENTS")
@@ -249,6 +266,26 @@ func (r *Renderer) renderList(f scanner.FileInfo) {
 		cols = append(cols, r.truncate(checksum, 32))
 	}
 
+	if r.opts.ShowSELinux {
+		cols = append(cols, r.truncate(f.Metadata.SELinux, 32))
+	}
+
+	if r.opts.ShowSamba {
+		cols = append(cols, r.truncate(f.Metadata.DOSAttrib, 10))
+	}
+
+	if r.opts.ShowCapabilities {
+		capStr := ""
+		if len(f.Metadata.Capabilities) > 0 {
+			capStr = "+"
+		}
+		cols = append(cols, capStr)
+	}
+
+	if r.opts.ShowACL {
+		cols = append(cols, f.Metadata.ACL)
+	}
+
 	cols = append(cols, tagsStr, cmntStr)
 
 	if r.opts.MultiColumn {
@@ -278,11 +315,30 @@ func (r *Renderer) renderInspect(f scanner.FileInfo) {
 		if f.Metadata.HasCmnt {
 			_, _ = fmt.Fprintf(r.out, "    comment: %s\n", f.Metadata.Comment)
 		}
+		if f.Metadata.HasRating {
+			_, _ = fmt.Fprintf(r.out, "    rating: %s\n", f.Metadata.Rating)
+		}
 		for k, v := range f.Metadata.XDG {
-			if k != "user.xdg.tags" && k != "user.xdg.comment" {
+			if k != "user.xdg.tags" && k != "user.xdg.comment" && k != "user.xdg.rating" {
 				_, _ = fmt.Fprintf(r.out, "    %s: %s\n", strings.TrimPrefix(k, "user.xdg."), string(v))
 			}
 		}
+	}
+
+	if f.Metadata.SELinux != "" {
+		_, _ = fmt.Fprintf(r.out, "  SELinux Context: %s\n", f.Metadata.SELinux)
+	}
+
+	if f.Metadata.DOSAttrib != "" {
+		_, _ = fmt.Fprintf(r.out, "  Samba DOS Attributes: %s\n", f.Metadata.DOSAttrib)
+	}
+
+	if f.Metadata.ACL != "" {
+		_, _ = fmt.Fprintf(r.out, "  ACL: %s\n", f.Metadata.ACL)
+	}
+
+	if len(f.Metadata.Capabilities) > 0 {
+		_, _ = fmt.Fprintf(r.out, "  Capabilities: present\n")
 	}
 
 	var hasOther bool

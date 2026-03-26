@@ -18,7 +18,7 @@ var helpText string
 
 type runOptions struct {
 	fs          scanner.FileSystem
-	xattrReader xattr.Reader
+	xattrStore  xattr.Store
 }
 
 type RunOption func(*runOptions)
@@ -29,9 +29,9 @@ func WithFS(fs scanner.FileSystem) RunOption {
 	}
 }
 
-func WithXattrReader(r xattr.Reader) RunOption {
+func WithXattrStore(s xattr.Store) RunOption {
 	return func(o *runOptions) {
-		o.xattrReader = r
+		o.xattrStore = s
 	}
 }
 
@@ -68,9 +68,18 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 	showCreator := false
 	showOrigin := false
 	showChecksum := false
+	showSELinux := false
+	showSamba := false
+	showCapabilities := false
+	showACL := false
 	showHidden := false
 	singleColumn := false
 	multiColumn := false
+
+	var setTags, addTags, removeTags, setComment, setRating *string
+	clearTags := false
+	clearComment := false
+	clearRating := false
 
 	paths := []string{}
 
@@ -155,6 +164,35 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 				showOrigin = true
 			case "checksum":
 				showChecksum = true
+			case "selinux":
+				showSELinux = true
+			case "samba":
+				showSamba = true
+			case "capabilities":
+				showCapabilities = true
+			case "acl":
+				showACL = true
+			case "set-tags":
+				v := val
+				setTags = &v
+			case "add-tags":
+				v := val
+				addTags = &v
+			case "remove-tags":
+				v := val
+				removeTags = &v
+			case "clear-tags":
+				clearTags = true
+			case "set-comment":
+				v := val
+				setComment = &v
+			case "clear-comment":
+				clearComment = true
+			case "set-rating":
+				v := val
+				setRating = &v
+			case "clear-rating":
+				clearRating = true
 			case "all-xdg":
 				allXdg = true
 			case "all-xattr":
@@ -224,11 +262,16 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 	nextArg:
 	}
 
+	hasMutation := setTags != nil || addTags != nil || removeTags != nil || clearTags || setComment != nil || clearComment || setRating != nil || clearRating
+	if hasMutation {
+		return runMutate(runCfg, paths, setTags, addTags, removeTags, clearTags, setComment, clearComment, setRating, clearRating)
+	}
+
 	if inspectMode {
 		return Inspect(runCfg, allXdg, allXattr, recursive, jsonOutput, maxTagsW, maxCmntW, sortField, paths...)
 	}
 
-	return Lxa(runCfg, mode, recursive, filterExpr, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, longListing, noGroup, noUser, showHeader, showAuthor, showCreator, showOrigin, showChecksum, showHidden, singleColumn, multiColumn, paths...)
+	return Lxa(runCfg, mode, recursive, filterExpr, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, longListing, noGroup, noUser, showHeader, showAuthor, showCreator, showOrigin, showChecksum, showSELinux, showSamba, showCapabilities, showACL, showHidden, singleColumn, multiColumn, paths...)
 }
 
 func printHelp() {

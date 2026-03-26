@@ -18,11 +18,25 @@ Options:
       --creator                  Show creator (user.creator)
       --origin                   Show origin (user.origin)
       --checksum                 Show checksum (user.checksum)
+      --selinux                  Show SELinux context
+      --samba                    Show Samba DOS attributes
+      --capabilities             Show Capabilities
+      --acl                      Show ACL presence
   -T, -W, --max-tags-width int   Maximum display width for tags (default 40)
   -C, --max-comment-width int    Maximum display width for comments (default 60)
   -1                             Single column layout
   -C                             Multi-column layout
   -s, --sort string              Sort by: name, path, xdg, tags, comment (default "name")
+
+Mutation Options:
+  --set-tags=...                 Set user.xdg.tags (comma-separated)
+  --add-tags=...                 Add tags without duplicates
+  --remove-tags=...              Remove specified tags
+  --clear-tags                   Remove user.xdg.tags entirely
+  --set-comment=...              Set user.xdg.comment
+  --clear-comment                Remove user.xdg.comment entirely
+  --set-rating=...               Set user.xdg.rating
+  --clear-rating                 Remove user.xdg.rating entirely
 
 Inspect Options:
   -X, --all-xdg                  Show all XDG metadata attributes
