@@ -10,6 +10,8 @@ builds:
   - id: lxa
     main: ./cmd/lxa
     binary: lxa
+    ldflags:
+      - -s -w -X github.com/lxa-project/lxa/internal/cli.Version={{.Version}}
     env:
       - CGO_ENABLED=0
     goos:

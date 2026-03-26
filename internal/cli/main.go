@@ -15,6 +15,7 @@ import (
 //go:embed help.tmpl
 var helpText string
 
+var Version = "dev"
 
 type runOptions struct {
 	fs          scanner.FileSystem
@@ -48,6 +49,11 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 
 	if len(args) > 0 && (args[0] == "-h" || args[0] == "--help" || args[0] == "help") {
 		printHelp()
+		return nil
+	}
+
+	if len(args) > 0 && (args[0] == "-v" || args[0] == "--version" || args[0] == "version") {
+		fmt.Fprintf(Out, "lxa version %s\n", Version)
 		return nil
 	}
 
@@ -198,7 +204,7 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 			case "all-xattr":
 				allXattr = true
 			default:
-				return fmt.Errorf("unknown flag: %s", arg)
+				return fmt.Errorf("unknown flag: %s\nRun 'lxa --help' for usage.", arg)
 			}
 			continue
 		}
@@ -256,7 +262,7 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 				}
 				goto nextArg
 			default:
-				return fmt.Errorf("unknown short flag: -%c", c)
+				return fmt.Errorf("unknown short flag: -%c\nRun 'lxa --help' for usage.", c)
 			}
 		}
 	nextArg:
