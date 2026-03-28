@@ -67,6 +67,13 @@ func (m *MockFS) Lstat(name string) (fs.FileInfo, error) {
 	return nil, fs.ErrNotExist
 }
 
+func (m *MockFS) Stat(name string) (fs.FileInfo, error) {
+	if info, ok := m.files[name]; ok {
+		return info, nil
+	}
+	return nil, os.ErrNotExist
+}
+
 func (m *MockFS) ReadDir(name string) ([]fs.DirEntry, error) {
 	var entries []fs.DirEntry
 	for path, info := range m.files {

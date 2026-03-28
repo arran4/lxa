@@ -48,6 +48,35 @@ type Options struct {
 	ShowACL          bool
 	SingleColumn     bool // -1 flag
 	MultiColumn      bool // -C flag
+
+	Escape           bool
+	BlockSize        string
+	Dired            bool
+	Classify         string
+	FileType         bool
+	Format           string
+	FullTime         bool
+	GroupDirsFirst   bool
+	HumanReadable    bool
+	Si               bool
+	Hyperlink        string
+	IndicatorStyle   string
+	Inode            bool
+	Kibibytes        bool
+	NumericUidGid    bool
+	Literal          bool
+	IndicatorSlash   bool
+	HideControlChars bool
+	ShowControlChars bool
+	QuoteName        bool
+	QuotingStyle     string
+	AllocSize        bool
+	TimeWord         string
+	TimeStyle        string
+	Tabsize          int
+	WidthCols        int
+	Context          bool
+	Zero             bool
 }
 
 // New creates a new Renderer.
@@ -64,7 +93,7 @@ func New(out io.Writer, opts Options) *Renderer {
 
 	if r.opts.JSONOutput {
 		_, _ = fmt.Fprint(r.out, "[")
-	} else if !r.opts.Inspect && !r.opts.MultiColumn {
+	} else if !r.opts.Inspect && !r.opts.MultiColumn && r.opts.Format != "commas" && r.opts.Format != "horizontal" {
 		r.tw = tabwriter.NewWriter(r.out, 0, 0, 2, ' ', 0)
 	}
 	r.columnsOutput = []string{}
@@ -104,9 +133,19 @@ func (r *Renderer) File(f scanner.FileInfo) {
 		return
 	}
 
-	if r.opts.ShowHeader && !r.opts.NoHeader && !r.headerPrinted && !r.opts.MultiColumn {
+	if r.opts.ShowHeader && !r.opts.NoHeader && !r.headerPrinted && !r.opts.MultiColumn && r.opts.Format != "commas" && r.opts.Format != "horizontal" {
 		header := []string{}
+		if r.opts.Inode {
+			header = append(header, "INODE")
+		}
+		if r.opts.AllocSize {
+			header = append(header, "BLOCKS")
+		}
+
 		if r.opts.LongListing {
+			if r.opts.Context {
+				header = append(header, "SELINUX")
+			}
 			header = append(header, "PERMISSIONS", "NODE")
 			if !r.opts.NoUser {
 				header = append(header, "OWNER")
@@ -132,7 +171,7 @@ func (r *Renderer) File(f scanner.FileInfo) {
 			header = append(header, "CHECKSUM")
 		}
 
-		if r.opts.ShowSELinux {
+		if r.opts.ShowSELinux && !r.opts.Context {
 			header = append(header, "SELINUX")
 		}
 		if r.opts.ShowSamba {
@@ -155,12 +194,22 @@ func (r *Renderer) File(f scanner.FileInfo) {
 }
 
 // formatSize converts bytes to human readable format
-func formatSize(b int64) string {
-	const unit = 1024
+func (r *Renderer) formatSize(b int64) string {
+	// fallback for exact same output behavior as before when no flags are used.
+	// `ls -l` original `lxa` formatted size human-readable by default.
+	// Since we added flags, we should either keep lxa default or respect flags.
+	// Let's keep lxa default which is human-readable unless a specific flag overrides it.
+	// Actually, original lxa just called formatSize(b) which was ALWAYS human readable (powers of 1024).
+
+	unit := int64(1024)
+	if r.opts.Si {
+		unit = 1000
+	}
+
 	if b < unit {
 		return fmt.Sprintf("%d", b)
 	}
-	div, exp := int64(unit), 0
+	div, exp := unit, 0
 	for n := b / unit; n >= unit; n /= unit {
 		div *= unit
 		exp++
@@ -169,7 +218,21 @@ func formatSize(b int64) string {
 }
 
 // formatTime converts time to match standard ls -l like "Jan  1  2024" or "Jan  1 15:04"
-func formatTime(t time.Time) string {
+func (r *Renderer) formatTime(t time.Time) string {
+	if r.opts.FullTime || r.opts.TimeStyle == "full-iso" {
+		return t.Format("2006-01-02 15:04:05.000000000 -0700")
+	}
+	if r.opts.TimeStyle == "long-iso" {
+		return t.Format("2006-01-02 15:04")
+	}
+	if r.opts.TimeStyle == "iso" {
+		now := time.Now()
+		if t.Year() == now.Year() {
+			return t.Format("01-02 15:04")
+		}
+		return t.Format("2006-01-02 ")
+	}
+
 	now := time.Now()
 	year := t.Year()
 	if year == now.Year() {
@@ -180,7 +243,11 @@ func formatTime(t time.Time) string {
 
 func (r *Renderer) renderList(f scanner.FileInfo) {
 	if f.Error != nil {
-		_, _ = fmt.Fprintf(r.tw, "-\t-\t-\t-\t-\t-\t%s\t(error: %s)\t\n", f.Path, f.Error)
+		if r.tw != nil {
+			_, _ = fmt.Fprintf(r.tw, "-\t-\t-\t-\t-\t-\t%s\t(error: %s)\t\n", f.Path, f.Error)
+		} else {
+			_, _ = fmt.Fprintf(r.out, "-\t-\t-\t-\t-\t-\t%s\t(error: %s)\t\n", f.Path, f.Error)
+		}
 		return
 	}
 
@@ -200,15 +267,19 @@ func (r *Renderer) renderList(f scanner.FileInfo) {
 
 	// File info extraction
 	mode := f.Info.Mode().String()
-	size := formatSize(f.Info.Size())
-	modTime := formatTime(f.Info.ModTime())
+	size := r.formatSize(f.Info.Size())
+	modTime := r.formatTime(f.Info.ModTime())
 
 	owner := "-"
 	group := "-"
 	node := "1"
+	blocks := int64(0)
+	inodeNum := uint64(0)
 
 	if stat, ok := f.Info.Sys().(*syscall.Stat_t); ok {
 		node = fmt.Sprint(stat.Nlink)
+		blocks = stat.Blocks
+		inodeNum = stat.Ino
 
 		if u, err := user.LookupId(fmt.Sprint(stat.Uid)); err == nil {
 			owner = u.Username
@@ -221,10 +292,32 @@ func (r *Renderer) renderList(f scanner.FileInfo) {
 		} else {
 			group = fmt.Sprint(stat.Gid)
 		}
+
+		if r.opts.NumericUidGid {
+			owner = fmt.Sprint(stat.Uid)
+			group = fmt.Sprint(stat.Gid)
+		}
 	}
 
 	cols := []string{}
+	if r.opts.Inode {
+		cols = append(cols, fmt.Sprint(inodeNum))
+	}
+	if r.opts.AllocSize {
+		allocStr := ""
+		if r.opts.Kibibytes {
+			allocStr = fmt.Sprint(blocks / 2)
+		} else {
+			allocStr = r.formatSize(blocks * 512)
+		}
+		cols = append(cols, allocStr)
+	}
+
 	if r.opts.LongListing {
+		if r.opts.Context {
+			cols = append(cols, r.truncate(f.Metadata.SELinux, 32))
+		}
+
 		cols = append(cols, mode, node)
 		if !r.opts.NoUser {
 			cols = append(cols, owner)
@@ -235,7 +328,51 @@ func (r *Renderer) renderList(f scanner.FileInfo) {
 		cols = append(cols, size, modTime)
 	}
 
-	cols = append(cols, name)
+	formattedName := name
+
+	// apply quotes
+	if r.opts.QuoteName || r.opts.QuotingStyle == "c" {
+		formattedName = fmt.Sprintf("%q", name)
+	} else if r.opts.Escape {
+		formattedName = fmt.Sprintf("%q", name)
+		formattedName = formattedName[1 : len(formattedName)-1] // remove outer quotes
+	}
+
+	// append indicators
+	if r.opts.IndicatorSlash || r.opts.IndicatorStyle == "slash" {
+		if f.Info.IsDir() {
+			formattedName += "/"
+		}
+	} else if r.opts.Classify == "always" || r.opts.IndicatorStyle == "classify" {
+		if f.Info.IsDir() {
+			formattedName += "/"
+		} else if f.Info.Mode()&os.ModeSymlink != 0 {
+			formattedName += "@"
+		} else if f.Info.Mode()&0111 != 0 {
+			formattedName += "*"
+		} else if f.Info.Mode()&os.ModeNamedPipe != 0 {
+			formattedName += "|"
+		} else if f.Info.Mode()&os.ModeSocket != 0 {
+			formattedName += "="
+		}
+	} else if r.opts.FileType || r.opts.IndicatorStyle == "file-type" {
+		if f.Info.IsDir() {
+			formattedName += "/"
+		} else if f.Info.Mode()&os.ModeSymlink != 0 {
+			formattedName += "@"
+		} else if f.Info.Mode()&os.ModeNamedPipe != 0 {
+			formattedName += "|"
+		} else if f.Info.Mode()&os.ModeSocket != 0 {
+			formattedName += "="
+		}
+	}
+
+	if r.opts.Hyperlink == "always" {
+		// simple terminal hyperlink escape
+		formattedName = fmt.Sprintf("\033]8;;file://%s\033\\%s\033]8;;\033\\", f.Path, formattedName)
+	}
+
+	cols = append(cols, formattedName)
 
 	if r.opts.ShowAuthor {
 		author := ""
@@ -266,7 +403,7 @@ func (r *Renderer) renderList(f scanner.FileInfo) {
 		cols = append(cols, r.truncate(checksum, 32))
 	}
 
-	if r.opts.ShowSELinux {
+	if r.opts.ShowSELinux && !r.opts.Context {
 		cols = append(cols, r.truncate(f.Metadata.SELinux, 32))
 	}
 
@@ -288,10 +425,21 @@ func (r *Renderer) renderList(f scanner.FileInfo) {
 
 	cols = append(cols, tagsStr, cmntStr)
 
-	if r.opts.MultiColumn {
-		r.columnsOutput = append(r.columnsOutput, strings.Join(cols, "\t"))
+	line := strings.Join(cols, "\t")
+	if r.opts.Zero {
+		line = strings.ReplaceAll(line, "\n", "") + string('\x00')
+	}
+
+	if r.opts.Format == "commas" || r.opts.Format == "horizontal" {
+		r.columnsOutput = append(r.columnsOutput, line)
+	} else if r.opts.MultiColumn {
+		r.columnsOutput = append(r.columnsOutput, line)
 	} else {
-		_, _ = fmt.Fprintln(r.tw, strings.Join(cols, "\t"))
+		if r.opts.Zero {
+			_, _ = fmt.Fprint(r.tw, line)
+		} else {
+			_, _ = fmt.Fprintln(r.tw, line)
+		}
 	}
 }
 
@@ -364,7 +512,43 @@ func (r *Renderer) renderInspect(f scanner.FileInfo) {
 func (r *Renderer) Close() {
 	if r.opts.JSONOutput {
 		_, _ = fmt.Fprintln(r.out, "\n]")
-	} else if r.opts.MultiColumn {
+	} else if r.opts.Format == "commas" {
+		if len(r.columnsOutput) > 0 {
+			out := strings.Join(r.columnsOutput, ", ")
+			// basic wrap
+			width := r.opts.WidthCols
+			if width <= 0 {
+				width = r.termWidth
+			}
+			if width <= 0 {
+				width = 80
+			}
+
+			// simple word wrap
+			lines := []string{}
+			currLine := ""
+			words := strings.Split(out, " ")
+			for _, w := range words {
+				if len(currLine) + len(w) + 1 > width && currLine != "" {
+					lines = append(lines, currLine)
+					currLine = w
+				} else {
+					if currLine == "" {
+						currLine = w
+					} else {
+						currLine += " " + w
+					}
+				}
+			}
+			if currLine != "" {
+				lines = append(lines, currLine)
+			}
+
+			for _, l := range lines {
+				_, _ = fmt.Fprintln(r.out, l)
+			}
+		}
+	} else if r.opts.Format == "horizontal" || r.opts.MultiColumn {
 		// Calculate columns layout
 		if len(r.columnsOutput) == 0 {
 			return
@@ -376,7 +560,10 @@ func (r *Renderer) Close() {
 
 		// Very basic horizontal wrapping based on terminal width (if available)
 		// Assuming termWidth ~80 if not terminal
-		width := r.termWidth
+		width := r.opts.WidthCols
+		if width <= 0 {
+			width = r.termWidth
+		}
 		if width <= 0 {
 			width = 80
 		}

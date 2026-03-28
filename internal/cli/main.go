@@ -82,6 +82,45 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 	singleColumn := false
 	multiColumn := false
 
+	almostAll := false
+	escape := false
+	blockSize := ""
+	ignoreBackups := false
+	directory := false
+	dired := false
+	classify := ""
+	fileType := false
+	format := ""
+	fullTime := false
+	groupDirsFirst := false
+	humanReadable := false
+	si := false
+	dereferenceCmdLine := false
+	dereferenceCmdLineDir := false
+	hidePattern := ""
+	hyperlink := ""
+	indicatorStyle := ""
+	inode := false
+	ignorePattern := ""
+	kibibytes := false
+	dereference := false
+	numericUidGid := false
+	literal := false
+	indicatorSlash := false
+	hideControlChars := false
+	showControlChars := false
+	quoteName := false
+	quotingStyle := ""
+	reverse := false
+	allocSize := false
+	timeWord := ""
+	timeStyle := ""
+	tabsize := 8
+	widthCols := 0
+	lines := false
+	context := false
+	zero := false
+
 	var setTags, addTags, removeTags, setComment, setRating *string
 	clearTags := false
 	clearComment := false
@@ -131,7 +170,7 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 				}
 				mode = val
 			case "filter":
-				if !hasVal && i+1 < len(args) {
+				if !hasVal && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
 					i++
 					val = args[i]
 				}
@@ -203,6 +242,136 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 				allXdg = true
 			case "all-xattr":
 				allXattr = true
+			case "almost-all":
+				almostAll = true
+			case "escape":
+				escape = true
+			case "block-size":
+				if !hasVal && i+1 < len(args) {
+					i++
+					val = args[i]
+				}
+				blockSize = val
+			case "ignore-backups":
+				ignoreBackups = true
+			case "directory":
+				directory = true
+			case "dired":
+				dired = true
+			case "classify":
+				if !hasVal && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+					i++
+					val = args[i]
+				}
+				if val == "" {
+					val = "always"
+				}
+				classify = val
+			case "file-type":
+				fileType = true
+			case "format":
+				if !hasVal && i+1 < len(args) {
+					i++
+					val = args[i]
+				}
+				format = val
+			case "full-time":
+				fullTime = true
+			case "group-directories-first":
+				groupDirsFirst = true
+			case "no-group":
+				noGroup = true
+			case "human-readable":
+				humanReadable = true
+			case "si":
+				si = true
+			case "dereference-command-line":
+				dereferenceCmdLine = true
+			case "dereference-command-line-symlink-to-dir":
+				dereferenceCmdLineDir = true
+			case "hide":
+				if !hasVal && i+1 < len(args) {
+					i++
+					val = args[i]
+				}
+				hidePattern = val
+			case "hyperlink":
+				if !hasVal && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+					i++
+					val = args[i]
+				}
+				if val == "" {
+					val = "always"
+				}
+				hyperlink = val
+			case "indicator-style":
+				if !hasVal && i+1 < len(args) {
+					i++
+					val = args[i]
+				}
+				indicatorStyle = val
+			case "inode":
+				inode = true
+			case "ignore":
+				if !hasVal && i+1 < len(args) {
+					i++
+					val = args[i]
+				}
+				ignorePattern = val
+			case "kibibytes":
+				kibibytes = true
+			case "dereference":
+				dereference = true
+			case "numeric-uid-gid":
+				numericUidGid = true
+			case "literal":
+				literal = true
+			case "hide-control-chars":
+				hideControlChars = true
+			case "show-control-chars":
+				showControlChars = true
+			case "quote-name":
+				quoteName = true
+			case "quoting-style":
+				if !hasVal && i+1 < len(args) {
+					i++
+					val = args[i]
+				}
+				quotingStyle = val
+			case "reverse":
+				reverse = true
+			case "size":
+				allocSize = true
+			case "time":
+				if !hasVal && i+1 < len(args) {
+					i++
+					val = args[i]
+				}
+				timeWord = val
+			case "time-style":
+				if !hasVal && i+1 < len(args) {
+					i++
+					val = args[i]
+				}
+				timeStyle = val
+			case "tabsize":
+				if !hasVal && i+1 < len(args) {
+					i++
+					val = args[i]
+				}
+				tabsize, _ = strconv.Atoi(val)
+			case "width":
+				if !hasVal && i+1 < len(args) {
+					i++
+					val = args[i]
+				}
+				widthCols, _ = strconv.Atoi(val)
+			case "context":
+				context = true
+			case "zero":
+				zero = true
+			case "all": // mapping for -a
+				showHidden = true
 			default:
 				return fmt.Errorf("unknown flag: %s\nRun 'lxa --help' for usage.", arg)
 			}
@@ -218,7 +387,7 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 			case 'j':
 				jsonOutput = true
 			case 'H':
-				noHeader = true
+				dereferenceCmdLine = true // Note: Originally mapped to no-header, changing meaning based on GNU ls, so we need to fix it. Wait, GNU ls uses -H for dereference-command-line, so we should map -H to dereferenceCmdLine. But lxa previously mapped -H to no-header. Let's map -H to dereferenceCmdLine to comply with GNU ls and user request. But how about --no-header?
 			case 'l':
 				longListing = true
 			case 'o':
@@ -231,13 +400,78 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 				showHidden = true
 			case '1':
 				singleColumn = true
+			case 'A':
+				almostAll = true
+			case 'b':
+				escape = true
+			case 'B':
+				ignoreBackups = true
+			case 'c':
+				timeWord = "ctime"
+				// Note: technically -c affects sorting, we can handle it later in runList
+			case 'd':
+				directory = true
+			case 'D':
+				dired = true
+			case 'f':
+				showHidden = true
+				sortField = "none"
+			case 'F':
+				classify = "always"
+			case 'h':
+				humanReadable = true
+			case 'i':
+				inode = true
+			case 'k':
+				kibibytes = true
+			case 'L':
+				dereference = true
+			case 'm':
+				format = "commas"
+			case 'n':
+				longListing = true
+				numericUidGid = true
+			case 'N':
+				literal = true
+			case 'p':
+				indicatorSlash = true
+			case 'q':
+				hideControlChars = true
+			case 'Q':
+				quoteName = true
+			case 'r':
+				reverse = true
+			case 's':
+				allocSize = true
+			case 'S':
+				sortField = "size"
+			case 't':
+				sortField = "time"
+			case 'u':
+				timeWord = "atime"
+			case 'U':
+				sortField = "none"
+			case 'v':
+				sortField = "version"
+			case 'x':
+				format = "horizontal"
+			case 'X':
+				sortField = "extension"
+			case 'Z':
+				context = true
 			case 'C':
 				multiColumn = true
-			case 'X':
-				allXdg = true
-			case 'A':
-				allXattr = true
-			case 'm', 'f', 's', 'W', 'T':
+			case 'W': // keeping Lxa original max-tags-width
+				val := ""
+				if j+1 < len(chars) {
+					val = string(chars[j+1:])
+				} else if i+1 < len(args) {
+					i++
+					val = args[i]
+				}
+				maxTagsW, _ = strconv.Atoi(val)
+				goto nextArg
+			case 'I', 'w', 'T': // -m and -s and -f are repurposed, so we'll need to use long flags for mode/filter now, or redefine them. GNU ls uses -m for commas, -s for size, -f for not sort. Wait, original lxa used -m for mode, -f for filter, -s for sort, -W/-T for max-tags-width, -C for max-comment-width. The prompt said: "do not ignore entries starting with ." ... "Also error on invalid flags. Create a todo list and implement each one checking off the todo list then clean up." The user requested GNU ls flags compatibility. If there's a conflict between lxa specific flags and GNU ls flags, I should prioritize GNU ls flags because the prompt states "All of the flags visible need to be implemented".
 				val := ""
 				if j+1 < len(chars) {
 					// rest of string is the value
@@ -249,16 +483,12 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 				}
 
 				switch c {
-				case 'm':
-					mode = val
-				case 'f':
-					filterExpr = val
-				case 'W', 'T': // max-tags-width
-					maxTagsW, _ = strconv.Atoi(val)
-				case 'C':
-					maxCmntW, _ = strconv.Atoi(val)
-				case 's':
-					sortField = val
+				case 'I':
+					ignorePattern = val
+				case 'w':
+					widthCols, _ = strconv.Atoi(val)
+				case 'T':
+					tabsize, _ = strconv.Atoi(val)
 				}
 				goto nextArg
 			default:
@@ -277,7 +507,7 @@ func Run(args []string, out io.Writer, errOut io.Writer, opts ...RunOption) erro
 		return Inspect(runCfg, allXdg, allXattr, recursive, jsonOutput, maxTagsW, maxCmntW, sortField, paths...)
 	}
 
-	return Lxa(runCfg, mode, recursive, filterExpr, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, longListing, noGroup, noUser, showHeader, showAuthor, showCreator, showOrigin, showChecksum, showSELinux, showSamba, showCapabilities, showACL, showHidden, singleColumn, multiColumn, paths...)
+	return Lxa(runCfg, mode, recursive, filterExpr, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, longListing, noGroup, noUser, showHeader, showAuthor, showCreator, showOrigin, showChecksum, showSELinux, showSamba, showCapabilities, showACL, showHidden, singleColumn, multiColumn, almostAll, escape, blockSize, ignoreBackups, directory, dired, classify, fileType, format, fullTime, groupDirsFirst, humanReadable, si, dereferenceCmdLine, dereferenceCmdLineDir, hidePattern, hyperlink, indicatorStyle, inode, ignorePattern, kibibytes, dereference, numericUidGid, literal, indicatorSlash, hideControlChars, showControlChars, quoteName, quotingStyle, reverse, allocSize, timeWord, timeStyle, tabsize, widthCols, lines, context, zero, paths...)
 }
 
 func printHelp() {

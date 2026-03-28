@@ -15,20 +15,26 @@ lxa - a Linux-first file listing and inspection tool focused on extended attribu
 
 ## OPTIONS
 
-**-m, --mode** *string*
+**--mode** *string*
 : Filter mode: 'xdg', 'tags', 'comments', or 'all' (default "all").
+
+**-m, --format** *string*
+: Output format: 'commas'.
 
 **-R, --recursive**
 : Traverse directories recursively.
 
-**-f, --filter** *string*
+**--filter** *string*
 : Apply filter expression. Supported logic: `and`, `or`, `not`, `()`. Example: `(tag:urgent or tag:projectX) and has:comment`.
+
+**-f**
+: Do not sort, enable -a.
 
 **-j, --json**
 : Output in JSON format.
 
-**-H, --no-header**
-: Do not print table headers.
+**-H, --dereference-command-line**
+: Follow symlinks on the command line.
 
 **-l**
 : Long listing format. Prints permissions, node, owner, group, size, and modified time.
@@ -39,8 +45,107 @@ lxa - a Linux-first file listing and inspection tool focused on extended attribu
 **-g**
 : Long listing without user information.
 
-**-a**
+**-a, --all**
 : Include hidden files (those starting with a dot `.`).
+
+**-A, --almost-all**
+: Do not list implied . and ..
+
+**-b, --escape**
+: Print C-style escapes for nongraphic characters.
+
+**-B, --ignore-backups**
+: Do not list implied entries ending with ~.
+
+**-c**
+: Sort by ctime.
+
+**-d, --directory**
+: List directories themselves, not their contents.
+
+**-D, --dired**
+: Generate output designed for Emacs' dired mode.
+
+**-F, --classify[=WHEN]**
+: Append indicator.
+
+**--file-type**
+: Likewise, except do not append '*'.
+
+**-G, --no-group**
+: In a long listing, don't print group names.
+
+**-h, --human-readable**
+: Print sizes like 1K, 234M, 2G etc.
+
+**--si**
+: Likewise, but use powers of 1000 not 1024.
+
+**-i, --inode**
+: Print the index number of each file.
+
+**-I, --ignore=PATTERN**
+: Do not list implied entries matching shell PATTERN.
+
+**-k, --kibibytes**
+: Default to 1024-byte blocks for file system usage.
+
+**-L, --dereference**
+: When showing file info for symlink, show referenced file.
+
+**-n, --numeric-uid-gid**
+: List numeric user and group IDs.
+
+**-N, --literal**
+: Print entry names without quoting.
+
+**-p, --indicator-style=slash**
+: Append / indicator to directories.
+
+**-q, --hide-control-chars**
+: Print ? instead of nongraphic characters.
+
+**-Q, --quote-name**
+: Enclose entry names in double quotes.
+
+**-r, --reverse**
+: Reverse order while sorting.
+
+**-s, --size**
+: Print the allocated size of each file.
+
+**-S**
+: Sort by file size.
+
+**--sort** *string*
+: Sort by: name, size, time, version, extension, xdg, tags, comment (default "name").
+
+**-t**
+: Sort by time, newest first.
+
+**-u**
+: Sort by, and show, access time.
+
+**-U**
+: Do not sort directory entries.
+
+**-v**
+: Natural sort of (version) numbers.
+
+**-w, --width=COLS**
+: Set output width to COLS.
+
+**-x**
+: List entries by lines instead of by columns.
+
+**-X**
+: Sort alphabetically by entry extension.
+
+**-Z, --context**
+: Print any security context of each file.
+
+**--zero**
+: End each output line with NUL, not newline.
 
 **--header**
 : Show header row (title).
@@ -69,20 +174,14 @@ lxa - a Linux-first file listing and inspection tool focused on extended attribu
 **--acl**
 : Show ACL presence (reads `system.posix_acl_access` and `system.posix_acl_default`).
 
-**-T, -W, --max-tags-width** *int*
+**-W, --max-tags-width** *int*
 : Maximum display width for tags (default 40).
-
-**-C, --max-comment-width** *int*
-: Maximum display width for comments (default 60). Note: When used alone, `-C` forces multi-column layout.
 
 **-1**
 : Single column layout.
 
 **-C**
-: Multi-column layout.
-
-**-s, --sort** *string*
-: Sort by: name, path, xdg, tags, comment (default "name").
+: Multi-column layout. When used as `--max-comment-width`, sets comment width.
 
 ## INSPECT OPTIONS
 

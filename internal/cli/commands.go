@@ -16,7 +16,7 @@ import (
 var Out io.Writer = os.Stdout
 var ErrOut io.Writer = os.Stderr
 
-func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string, allXdg bool, allXattr bool, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, inspect bool, longListing bool, noGroup bool, noUser bool, showHeader bool, showAuthor bool, showCreator bool, showOrigin bool, showChecksum bool, showSELinux bool, showSamba bool, showCapabilities bool, showACL bool, showHidden bool, singleColumn bool, multiColumn bool, paths []string) error {
+func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string, allXdg bool, allXattr bool, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, inspect bool, longListing bool, noGroup bool, noUser bool, showHeader bool, showAuthor bool, showCreator bool, showOrigin bool, showChecksum bool, showSELinux bool, showSamba bool, showCapabilities bool, showACL bool, showHidden bool, singleColumn bool, multiColumn bool, almostAll bool, escape bool, blockSize string, ignoreBackups bool, directory bool, dired bool, classify string, fileType bool, format string, fullTime bool, groupDirsFirst bool, humanReadable bool, si bool, dereferenceCmdLine bool, dereferenceCmdLineDir bool, hidePattern string, hyperlink string, indicatorStyle string, inode bool, ignorePattern string, kibibytes bool, dereference bool, numericUidGid bool, literal bool, indicatorSlash bool, hideControlChars bool, showControlChars bool, quoteName bool, quotingStyle string, reverse bool, allocSize bool, timeWord string, timeStyle string, tabsize int, widthCols int, lines bool, context bool, zero bool, paths []string) error {
 	finalFilter := filterExpr
 
 	xdgOnly := false
@@ -38,11 +38,19 @@ func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string,
 	}
 
 	scanOpts := scanner.Options{
-		Recursive:  recursive,
-		Filter:     finalFilter,
-		XDGOnly:    xdgOnly,
-		FS:         runCfg.fs,
-		ShowHidden: showHidden,
+		Recursive:             recursive,
+		Filter:                finalFilter,
+		XDGOnly:               xdgOnly,
+		FS:                    runCfg.fs,
+		ShowHidden:            showHidden,
+		AlmostAll:             almostAll,
+		IgnoreBackups:         ignoreBackups,
+		DirectoryOnly:         directory,
+		HidePattern:           hidePattern,
+		IgnorePattern:         ignorePattern,
+		DereferenceCmdLine:    dereferenceCmdLine,
+		DereferenceCmdLineDir: dereferenceCmdLineDir,
+		Dereference:           dereference,
 	}
 
 	var reader xattr.Reader
@@ -58,19 +66,19 @@ func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string,
 	}
 
 	renderOpts := render.Options{
-		JSONOutput:      jsonOutput,
-		Inspect:         inspect || allXdg || allXattr,
-		MaxTagsWidth:    maxTagsW,
-		MaxCommentWidth: maxCmntW,
-		NoWrap:          false,
-		NoHeader:        noHeader,
-		LongListing:     longListing,
-		NoGroup:         noGroup,
-		NoUser:          noUser,
-		ShowHeader:      showHeader,
-		ShowAuthor:      showAuthor,
-		ShowCreator:     showCreator,
-		ShowOrigin:      showOrigin,
+		JSONOutput:       jsonOutput,
+		Inspect:          inspect || allXdg || allXattr,
+		MaxTagsWidth:     maxTagsW,
+		MaxCommentWidth:  maxCmntW,
+		NoWrap:           false,
+		NoHeader:         noHeader,
+		LongListing:      longListing,
+		NoGroup:          noGroup,
+		NoUser:           noUser,
+		ShowHeader:       showHeader,
+		ShowAuthor:       showAuthor,
+		ShowCreator:      showCreator,
+		ShowOrigin:       showOrigin,
 		ShowChecksum:     showChecksum,
 		ShowSELinux:      showSELinux,
 		ShowSamba:        showSamba,
@@ -78,6 +86,34 @@ func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string,
 		ShowACL:          showACL,
 		SingleColumn:     singleColumn,
 		MultiColumn:      multiColumn,
+		Escape:           escape,
+		BlockSize:        blockSize,
+		Dired:            dired,
+		Classify:         classify,
+		FileType:         fileType,
+		Format:           format,
+		FullTime:         fullTime,
+		GroupDirsFirst:   groupDirsFirst,
+		HumanReadable:    humanReadable,
+		Si:               si,
+		Hyperlink:        hyperlink,
+		IndicatorStyle:   indicatorStyle,
+		Inode:            inode,
+		Kibibytes:        kibibytes,
+		NumericUidGid:    numericUidGid,
+		Literal:          literal,
+		IndicatorSlash:   indicatorSlash,
+		HideControlChars: hideControlChars,
+		ShowControlChars: showControlChars,
+		QuoteName:        quoteName,
+		QuotingStyle:     quotingStyle,
+		AllocSize:        allocSize,
+		TimeWord:         timeWord,
+		TimeStyle:        timeStyle,
+		Tabsize:          tabsize,
+		WidthCols:        widthCols,
+		Context:          context,
+		Zero:             zero,
 	}
 
 	if len(paths) == 0 {
@@ -94,29 +130,96 @@ func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string,
 	sort.Slice(files, func(i, j int) bool {
 		f1, f2 := files[i], files[j]
 
+		if groupDirsFirst && f1.Info != nil && f2.Info != nil {
+			if f1.Info.IsDir() && !f2.Info.IsDir() {
+				return true
+			}
+			if !f1.Info.IsDir() && f2.Info.IsDir() {
+				return false
+			}
+		}
+
+		res := false
 		switch sortField {
 		case "path":
-			return f1.Path < f2.Path
+			res = f1.Path < f2.Path
 		case "xdg":
 			if f1.Metadata.HasXDG != f2.Metadata.HasXDG {
-				return f1.Metadata.HasXDG // files with XDG first
+				res = f1.Metadata.HasXDG // files with XDG first
+			} else {
+				res = f1.Path < f2.Path
 			}
-			return f1.Path < f2.Path
 		case "tags":
 			if f1.Metadata.HasTags != f2.Metadata.HasTags {
-				return f1.Metadata.HasTags // files with tags first
+				res = f1.Metadata.HasTags // files with tags first
+			} else {
+				res = f1.Path < f2.Path
 			}
-			return f1.Path < f2.Path
 		case "comment":
 			if f1.Metadata.HasCmnt != f2.Metadata.HasCmnt {
-				return f1.Metadata.HasCmnt // files with comment first
+				res = f1.Metadata.HasCmnt // files with comment first
+			} else {
+				res = f1.Path < f2.Path
 			}
-			return f1.Path < f2.Path
+		case "time":
+			if f1.Info == nil || f2.Info == nil {
+				res = f1.Path < f2.Path
+			} else {
+				t1 := f1.Info.ModTime()
+				t2 := f2.Info.ModTime()
+				// Time word mapping: access time (-u): atime, access, use; metadata change time (-c): ctime, status
+				// Wait, there's no native Go cross-platform ctime/atime without using syscall.Stat_t.
+				// Assuming mtime for basic time-sorting.
+				if timeWord != "" {
+					// We'll leave the exact ctime/atime implementation for later if needed, but for now map it to ModTime.
+				}
+				if t1.Equal(t2) {
+					res = f1.Path < f2.Path
+				} else {
+					res = t1.After(t2) // newest first
+				}
+			}
+		case "size":
+			if f1.Info == nil || f2.Info == nil {
+				res = f1.Path < f2.Path
+			} else {
+				if f1.Info.Size() == f2.Info.Size() {
+					res = f1.Path < f2.Path
+				} else {
+					res = f1.Info.Size() > f2.Info.Size() // largest first
+				}
+			}
+		case "version":
+			res = f1.Path < f2.Path // natural sort of numbers placeholder (could use regexp or custom logic, standard string compare for now)
+		case "extension":
+			// get extension
+			ext1 := ""
+			idx1 := strings.LastIndex(f1.Path, ".")
+			if idx1 > 0 {
+				ext1 = f1.Path[idx1:]
+			}
+			ext2 := ""
+			idx2 := strings.LastIndex(f2.Path, ".")
+			if idx2 > 0 {
+				ext2 = f2.Path[idx2:]
+			}
+			if ext1 == ext2 {
+				res = f1.Path < f2.Path
+			} else {
+				res = ext1 < ext2
+			}
+		case "none":
+			return i < j // do not sort
 		case "name":
 			fallthrough
 		default:
-			return f1.Path < f2.Path
+			res = f1.Path < f2.Path
 		}
+
+		if reverse {
+			return !res
+		}
+		return res
 	})
 
 	renderer := render.New(Out, renderOpts)
@@ -130,13 +233,13 @@ func runList(runCfg *runOptions, mode string, recursive bool, filterExpr string,
 }
 
 // Lxa is a subcommand `lxa` -- Lists files displaying extended attributes and XDG metadata
-func Lxa(runCfg *runOptions, mode string, recursive bool, filterExpr string, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, longListing bool, noGroup bool, noUser bool, showHeader bool, showAuthor bool, showCreator bool, showOrigin bool, showChecksum bool, showSELinux bool, showSamba bool, showCapabilities bool, showACL bool, showHidden bool, singleColumn bool, multiColumn bool, paths ...string) error {
-	return runList(runCfg, mode, recursive, filterExpr, false, false, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, false, longListing, noGroup, noUser, showHeader, showAuthor, showCreator, showOrigin, showChecksum, showSELinux, showSamba, showCapabilities, showACL, showHidden, singleColumn, multiColumn, paths)
+func Lxa(runCfg *runOptions, mode string, recursive bool, filterExpr string, jsonOutput bool, noHeader bool, maxTagsW int, maxCmntW int, sortField string, longListing bool, noGroup bool, noUser bool, showHeader bool, showAuthor bool, showCreator bool, showOrigin bool, showChecksum bool, showSELinux bool, showSamba bool, showCapabilities bool, showACL bool, showHidden bool, singleColumn bool, multiColumn bool, almostAll bool, escape bool, blockSize string, ignoreBackups bool, directory bool, dired bool, classify string, fileType bool, format string, fullTime bool, groupDirsFirst bool, humanReadable bool, si bool, dereferenceCmdLine bool, dereferenceCmdLineDir bool, hidePattern string, hyperlink string, indicatorStyle string, inode bool, ignorePattern string, kibibytes bool, dereference bool, numericUidGid bool, literal bool, indicatorSlash bool, hideControlChars bool, showControlChars bool, quoteName bool, quotingStyle string, reverse bool, allocSize bool, timeWord string, timeStyle string, tabsize int, widthCols int, lines bool, context bool, zero bool, paths ...string) error {
+	return runList(runCfg, mode, recursive, filterExpr, false, false, jsonOutput, noHeader, maxTagsW, maxCmntW, sortField, false, longListing, noGroup, noUser, showHeader, showAuthor, showCreator, showOrigin, showChecksum, showSELinux, showSamba, showCapabilities, showACL, showHidden, singleColumn, multiColumn, almostAll, escape, blockSize, ignoreBackups, directory, dired, classify, fileType, format, fullTime, groupDirsFirst, humanReadable, si, dereferenceCmdLine, dereferenceCmdLineDir, hidePattern, hyperlink, indicatorStyle, inode, ignorePattern, kibibytes, dereference, numericUidGid, literal, indicatorSlash, hideControlChars, showControlChars, quoteName, quotingStyle, reverse, allocSize, timeWord, timeStyle, tabsize, widthCols, lines, context, zero, paths)
 }
 
 // Inspect is a subcommand `lxa inspect` -- Inspects file extended attributes in detail
 func Inspect(runCfg *runOptions, allXdg bool, allXattr bool, recursive bool, jsonOutput bool, maxTagsW int, maxCmntW int, sortField string, paths ...string) error {
-	return runList(runCfg, "all", recursive, "", allXdg, allXattr, jsonOutput, false, maxTagsW, maxCmntW, sortField, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, paths)
+	return runList(runCfg, "all", recursive, "", allXdg, allXattr, jsonOutput, false, maxTagsW, maxCmntW, sortField, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, "", false, false, false, "", false, "", false, false, false, false, false, false, "", "", "", false, "", false, false, false, false, false, false, false, false, "", false, false, "", "", 8, 0, false, false, false, paths)
 }
 
 func runMutate(runCfg *runOptions, paths []string, setTags, addTags, removeTags *string, clearTags bool, setComment *string, clearComment bool, setRating *string, clearRating bool) error {

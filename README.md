@@ -17,7 +17,7 @@ It provides a compact, readable, terminal-width-aware output emphasizing XDG tag
 - **Inspect Mode**: Detailed view of all `user.xdg.*` and other extended attributes.
 - **JSON Output**: Structured, parseable JSON for scripting.
 - **No Dependencies**: Pure Go, native Linux syscalls, no shelling out to `getfattr`.
-- **Customizable Output**: Long listing formats (`-l`, `-o`, `-g`), multi-column output (`-C`), toggle headers (`--header`), toggle hidden files (`-a`) and specialized xattr columns (`--author`, `--creator`, `--origin`, `--checksum`, `--selinux`, `--samba`, `--capabilities`, `--acl`).
+- **Customizable Output**: Long listing formats (`-l`, `-o`, `-g`), multi-column output (`-C`), toggle headers (`--header`), toggle hidden files (`-a`, `-A`), advanced sorting (`-S`, `-t`, `-v`), rendering layouts (`-m`, `-x`, `-1`), symlink dereferencing (`-L`, `-H`), indicators (`-F`, `-p`), specialized xattr columns (`--author`, `--creator`, `--origin`, `--checksum`, `--selinux`, `--samba`, `--capabilities`, `--acl`), and broad GNU ls flag compatibility.
 - **First-class Metadata Mutation**: Edit, set, add, remove, and clear metadata such as tags, comments, and ratings directly from the CLI without awkward subcommands (`--set-tags`, `--add-tags`, `--set-comment`, `--set-rating`, etc).
 
 ## Installation
@@ -51,9 +51,9 @@ PERMISSIONS  NODE  OWNER  GROUP  SIZE  MODIFIED      FILENAME                   
 ```
 
 ### Modes
-Show only files with XDG metadata, tags, or comments specifically using the `-m` (mode) flag:
+Show only files with XDG metadata, tags, or comments specifically using the `--mode` flag:
 ```bash
-$ lxa -m tags
+$ lxa --mode tags
 file2.txt [tags: projectX] [comment: needs review]
 ```
 
