@@ -5,15 +5,61 @@ lxa is a Linux-first file listing tool focused on extended attributes and XDG me
 
 Options:
   -v, --version                  Show lxa version
-  -m, --mode string              Filter mode: 'xdg', 'tags', 'comments', or 'all' (default "all")
+  -m, --format string            Format (used to be mode, now commas)
   -R, --recursive                Traverse directories recursively
-  -f, --filter string            Apply filter expression
+  -f, --filter string            Apply filter expression (also used for not sort and hidden)
   -j, --json                     Output in JSON format
-  -H, --no-header                Do not print table headers
+  -H, --dereference-command-line Follow symlinks on command line
   -l                             Long listing format
   -o                             Long listing without group information
   -g                             Long listing without user information
-  -a                             Include hidden files
+  -a, --all                      Include hidden files
+  -A, --almost-all               Do not list implied . and ..
+  -b, --escape                   Print C-style escapes for nongraphic characters
+      --block-size=SIZE          Scale sizes by SIZE
+  -B, --ignore-backups           Do not list implied entries ending with ~
+  -c                             Sort by ctime
+  -d, --directory                List directories themselves
+  -D, --dired                    Generate output designed for Emacs' dired mode
+  -F, --classify[=WHEN]          Append indicator
+      --file-type                Likewise, except do not append '*'
+      --format=WORD              across -x, commas -m, long -l, single-column -1
+      --full-time                Like -l --time-style=full-iso
+      --group-directories-first  Group directories before files
+  -G, --no-group                 In a long listing, don't print group names
+  -h, --human-readable           Print sizes in human readable format
+      --si                       Likewise, but use powers of 1000 not 1024
+      --dereference-command-line-symlink-to-dir
+      --hide=PATTERN             Do not list implied entries matching shell PATTERN
+      --hyperlink[=WHEN]         Hyperlink file names WHEN
+      --indicator-style=WORD     Append indicator with style WORD
+  -i, --inode                    Print the index number of each file
+  -I, --ignore=PATTERN           Do not list implied entries matching shell PATTERN
+  -k, --kibibytes                Default to 1024-byte blocks for file system usage
+  -L, --dereference              When showing file info for symlink, show referenced file
+  -n, --numeric-uid-gid          List numeric user and group IDs
+  -N, --literal                  Print entry names without quoting
+  -p, --indicator-style=slash    Append / indicator to directories
+  -q, --hide-control-chars       Print ? instead of nongraphic characters
+      --show-control-chars       Show nongraphic characters as-is
+  -Q, --quote-name               Enclose entry names in double quotes
+      --quoting-style=WORD       Use quoting style WORD
+  -r, --reverse                  Reverse order while sorting
+  -s, --size                     Print the allocated size of each file
+  -S                             Sort by file size
+      --sort=WORD                Sort by: name, size, time, version, extension
+      --time=WORD                Select which timestamp used to display or sort
+      --time-style=TIME_STYLE    Time/date format with -l
+  -t                             Sort by time, newest first
+  -T, --tabsize=COLS             Assume tab stops at each COLS
+  -u                             Sort by, and show, access time
+  -U                             Do not sort directory entries
+  -v                             Natural sort of (version) numbers
+  -w, --width=COLS               Set output width to COLS
+  -x                             List entries by lines instead of by columns
+  -X                             Sort alphabetically by entry extension
+  -Z, --context                  Print any security context of each file
+      --zero                     End each output line with NUL
       --header                   Show header row (title)
       --author                   Show author (user.author)
       --creator                  Show creator (user.creator)
@@ -23,11 +69,9 @@ Options:
       --samba                    Show Samba DOS attributes
       --capabilities             Show Capabilities
       --acl                      Show ACL presence
-  -T, -W, --max-tags-width int   Maximum display width for tags (default 40)
-  -C, --max-comment-width int    Maximum display width for comments (default 60)
+  -W, --max-tags-width int       Maximum display width for tags (default 40)
+  -C                             Multi-column layout, or maximum display width for comments
   -1                             Single column layout
-  -C                             Multi-column layout
-  -s, --sort string              Sort by: name, path, xdg, tags, comment (default "name")
 
 Mutation Options:
   --set-tags=...                 Set user.xdg.tags (comma-separated)
