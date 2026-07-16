@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lxa-project/lxa/internal/render"
-	"github.com/lxa-project/lxa/internal/scanner"
-	"github.com/lxa-project/lxa/internal/xattr"
+	"github.com/arran4/lxa/internal/render"
+	"github.com/arran4/lxa/internal/scanner"
+	"github.com/arran4/lxa/internal/xattr"
 )
 
 var Out io.Writer = os.Stdout

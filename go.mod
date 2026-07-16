@@ -1,4 +1,4 @@
-module github.com/lxa-project/lxa
+module github.com/arran4/lxa
 
 go 1.24.0
 

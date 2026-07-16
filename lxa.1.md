@@ -246,4 +246,4 @@ $ lxa inspect myfile.txt
 
 ## BUGS
 
-Report bugs at https://github.com/lxa-project/lxa/issues
+Report bugs at https://github.com/arran4/lxa/issues

@@ -1,7 +1,7 @@
 package filter
 
 import (
-	"github.com/lxa-project/lxa/internal/xattr"
+	"github.com/arran4/lxa/internal/xattr"
 )
 
 // Evaluator evaluates metadata against an AST node.

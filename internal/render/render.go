@@ -11,7 +11,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/lxa-project/lxa/internal/scanner"
+	"github.com/arran4/lxa/internal/scanner"
 )
 
 // Renderer handles formatting output.

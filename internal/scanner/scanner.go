@@ -7,8 +7,8 @@ import (
 
 	"strings"
 
-	"github.com/lxa-project/lxa/internal/filter"
-	"github.com/lxa-project/lxa/internal/xattr"
+	"github.com/arran4/lxa/internal/filter"
+	"github.com/arran4/lxa/internal/xattr"
 )
 
 // FileInfo contains standard fs.FileInfo and XDG metadata.
