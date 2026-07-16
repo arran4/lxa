@@ -15,7 +15,7 @@ import (
 
 	"golang.org/x/tools/txtar"
 
-	"github.com/lxa-project/lxa/internal/cli"
+	"github.com/arran4/lxa/internal/cli"
 )
 
 //go:embed testdata/*.txtar

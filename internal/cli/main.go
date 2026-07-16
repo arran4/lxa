@@ -8,8 +8,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/lxa-project/lxa/internal/scanner"
-	"github.com/lxa-project/lxa/internal/xattr"
+	"github.com/arran4/lxa/internal/scanner"
+	"github.com/arran4/lxa/internal/xattr"
 )
 
 //go:embed help.tmpl

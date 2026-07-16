@@ -1,5 +1,7 @@
 # lxa
 
+> **Note:** This project is currently an early release and we are looking for testers!
+
 `lxa` is a Linux-first file listing and inspection tool focused on extended attributes, especially XDG metadata (`user.xdg.tags`, `user.xdg.comment`, etc).
 
 ## Why `lxa`?
@@ -22,9 +24,12 @@ It provides a compact, readable, terminal-width-aware output emphasizing XDG tag
 
 ## Installation
 
+### Pre-compiled Binaries (Recommended)
+You can download pre-compiled binaries for `linux-amd64` and `linux-arm64` (along with checksums and a changelog) from the [GitHub Releases page](https://github.com/arran4/lxa/releases).
+
 ### Build from source
 ```bash
-go install github.com/lxa-project/lxa/cmd/lxa@latest
+go install github.com/arran4/lxa/cmd/lxa@latest
 ```
 
 ## Usage
@@ -141,3 +146,7 @@ List files that have not been seen:
 ```bash
 lxa --filter 'not tag:Seen'
 ```
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

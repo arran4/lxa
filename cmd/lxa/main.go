@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/lxa-project/lxa/internal/cli"
+	"github.com/arran4/lxa/internal/cli"
 )
 
 func main() {

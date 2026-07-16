@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lxa-project/lxa/internal/xattr"
+	"github.com/arran4/lxa/internal/xattr"
 )
 
 // Node represents a node in the filter AST.

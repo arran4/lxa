@@ -3,7 +3,7 @@ package filter
 import (
 	"testing"
 
-	"github.com/lxa-project/lxa/internal/xattr"
+	"github.com/arran4/lxa/internal/xattr"
 )
 
 func TestFilter(t *testing.T) {

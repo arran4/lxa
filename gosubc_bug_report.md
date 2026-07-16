@@ -1,7 +1,7 @@
 # Bug Report: `gosubc` Import Cycle and Dead Code Generation
 
 ## Issue 1: Import Cycle When Using `--dir`
-When running `gosubc generate` within the `cmd/lxa` package containing the `commands.go` file (e.g. `go generate .`), `gosubc` correctly parses `func Lxa` and `func Inspect`. However, the generated `root.go` and `inspect.go` files inject standard imports referring to `github.com/lxa-project/lxa/cmd/lxa/cmd` or the package itself natively.
+When running `gosubc generate` within the `cmd/lxa` package containing the `commands.go` file (e.g. `go generate .`), `gosubc` correctly parses `func Lxa` and `func Inspect`. However, the generated `root.go` and `inspect.go` files inject standard imports referring to `github.com/arran4/lxa/cmd/lxa/cmd` or the package itself natively.
 Because these generated output files reside in `cmd/lxa` but import the very same namespace, the Go compiler immediately panics stating `import cycle not allowed`.
 
 ## Issue 2: Generation target folder discrepancy
